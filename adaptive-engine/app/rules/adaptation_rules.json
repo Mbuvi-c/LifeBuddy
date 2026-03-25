@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "id": "R001",
+      "condition": "consecutive_errors >= 3",
+      "action": "decrease_difficulty",
+      "explanation": "Difficulty reduced after 3 consecutive errors"
+    },
+    {
+      "id": "R002",
+      "condition": "consecutive_successes >= 5",
+      "action": "increase_difficulty",
+      "explanation": "Difficulty increased after 5 consecutive successes"
+    },
+    {
+      "id": "R003",
+      "condition": "error_rate > 0.6",
+      "action": "trigger_hint",
+      "explanation": "High error rate detected — hint triggered"
+    },
+    {
+      "id": "R004",
+      "condition": "consecutive_errors >= 5",
+      "action": "decrease_difficulty AND notify_caregiver",
+      "explanation": "Persistent difficulty detected — difficulty reduced and caregiver notified"
+    },
+    {
+      "id": "R005",
+      "condition": "consecutive_successes >= 10",
+      "action": "increase_difficulty AND notify_caregiver",
+      "explanation": "Exceptional performance — difficulty increased and caregiver notified"
+    }
+  ]
+}
