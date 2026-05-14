@@ -30,24 +30,6 @@ def update_learner_tier(db: Session, learner_id: str, new_tier: int) -> dict:
     return get_learner_profile(db, learner_id)
 
 def get_recent_performance(db: Session, learner_id: str) -> dict:
-    sessions = db.execute(
-        text("""
-            SELECT s.id, s.simulation_type, s.successful_tasks, s.total_tasks
-            FROM sessions s
-            WHERE s.learner_id = :id
-            ORDER BY s.start_time DESC
-            LIMIT 5
-        """),
-        {"id": learner_id}
-    ).fetchall()
-    
-    if not sessions:
-        return {
-            "consecutive_errors": 0,
-            "consecutive_successes": 0,
-            "error_rate": 0.0
-        }
-    
     events = db.execute(
         text("""
             SELECT te.success
@@ -59,37 +41,36 @@ def get_recent_performance(db: Session, learner_id: str) -> dict:
         """),
         {"id": learner_id}
     ).fetchall()
-    
+
     if not events:
         return {
             "consecutive_errors": 0,
             "consecutive_successes": 0,
             "error_rate": 0.0
         }
-    
+
+    # Count consecutive errors from most recent attempt backwards
     consecutive_errors = 0
-    consecutive_successes = 0
-    
     for event in events:
         if not event.success:
             consecutive_errors += 1
-            consecutive_successes = 0
         else:
             break
-    
+
+    # Count consecutive successes from most recent attempt backwards
+    consecutive_successes = 0
     for event in events:
         if event.success:
             consecutive_successes += 1
-            consecutive_errors = 0
         else:
             break
-    
+
     total = len(events)
     errors = sum(1 for e in events if not e.success)
-    error_rate = errors / total if total > 0 else 0.0
-    
+    error_rate = round(errors / total, 2) if total > 0 else 0.0
+
     return {
         "consecutive_errors": consecutive_errors,
         "consecutive_successes": consecutive_successes,
-        "error_rate": round(error_rate, 2)
+        "error_rate": error_rate
     }

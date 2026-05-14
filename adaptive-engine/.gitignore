@@ -1,0 +1,22 @@
+﻿# Environment variables - contains passwords, never push this
+.env
+
+# Python cache files - auto-generated, not needed on GitHub
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment - too large, collaborators install their own
+venv/
+env/
+
+# pytest cache
+.pytest_cache/
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
