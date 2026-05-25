@@ -1,4 +1,4 @@
-import SimulationEngine from './game/engine/SimulationEngine';
+import SimulationEngine from './game/engine/SimulationEngineV2';
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─────────────────────────────────────────────
@@ -2774,8 +2774,8 @@ function GameScreen({ nav, skill, tierData, setSessionResult, settings }) {
 
   return (
     <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column"}}>
-      {/* Top bar */}
-      <div style={{background:"var(--bg2)",borderBottom:"1px solid var(--border)",padding:"0 20px",height:56,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+      {/* Top bar hidden — SimulationEngineV2 has its own header */}
+      <div style={{display:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{display:"flex",alignItems:"center"}}><SkillIcon sim={skillData} size={20}/></span>
           <span style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:14,color:"var(--text)"}}>{skillData.name}</span>
@@ -2819,7 +2819,7 @@ function GameScreen({ nav, skill, tierData, setSessionResult, settings }) {
         </div>
       )}
 
-      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflow:"auto"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",position:"relative",overflow:"auto",alignItems:"stretch"}}>
         <div className="glow-orb" style={{width:400,height:400,background:"rgba(108,99,255,0.07)",top:"5%",left:"50%",transform:"translateX(-50%)"}}/>
         {paused ? (
           <div style={{textAlign:"center",zIndex:1,position:"relative"}}>
@@ -2829,17 +2829,15 @@ function GameScreen({ nav, skill, tierData, setSessionResult, settings }) {
             <button className="btn btn-primary" onClick={() => setPaused(false)}>▶ Resume</button>
           </div>
         ) : (
-          <div className="page-enter" style={{width:"100%",maxWidth:580,position:"relative",zIndex:1}}>
-            <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:20}}>
+          <div className="page-enter" style={{width:"100%",maxWidth:"100%",position:"relative",zIndex:1}}>
+            <div style={{display:"none",gap:8,justifyContent:"center",marginBottom:20}}>
               {[...Array(TASK_COUNT)].map((_,i) => (
                 <Tip key={i} label={i < tasksDone ? `Task ${i+1} — completed ✓` : i === tasksDone ? `Task ${i+1} — in progress` : `Task ${i+1} — coming up`}>
                   <div style={{width:28,height:6,borderRadius:3,background:i<tasksDone?"var(--green)":i===tasksDone?"var(--accent)":"var(--surface2)",transition:"background 0.3s",cursor:"default"}}/>
                 </Tip>
               ))}
             </div>
-            <div className="card" style={{padding:"32px 28px"}}>
-              <SimComp tier={currentTier} taskCount={TASK_COUNT} onTaskComplete={handleTaskComplete} onSessionEnd={handleSessionEnd} onGoBack={handleGoBack} settings={settings}/>
-            </div>
+            <SimComp tier={currentTier} taskCount={TASK_COUNT} onTaskComplete={handleTaskComplete} onSessionEnd={handleSessionEnd} onGoBack={() => nav("simulations")} settings={settings}/>
           </div>
         )}
       </div>
