@@ -197,7 +197,7 @@ def notify_caregiver(db: Session, learner_id: str, frustration_index: float,
     db.commit()
 
 
-def process_adaptation(db: Session, learner_id: str, skill: str = "daily_routine",
+def process_adaptation(db: Session, learner_id: str, skill: str = "money_transactions",
                        response_type: str = "correct", hints_used: int = 0,
                        quit_signal: bool = False, simulation_type: str = "daily_living",
                        task_type: str = "general", success: bool = True,

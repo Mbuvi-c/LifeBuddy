@@ -34,7 +34,7 @@ SKILLS = {
     # community_safety       — mixed familiarity. low-moderate prior
     # workplace_readiness    — very low prior for most learners. slow learning
 
-    "money_transactions":     {"L": 0.15, "T": 0.18, "S": 0.10, "G": 0.20},
+    "money_transactions":     {"L": 0.15, "T": 0.02, "S": 0.10, "G": 0.10},
     "time_planning":          {"L": 0.10, "T": 0.12, "S": 0.12, "G": 0.18},
     "digital_safety":         {"L": 0.12, "T": 0.15, "S": 0.10, "G": 0.20},
     "mobile_money":           {"L": 0.05, "T": 0.10, "S": 0.08, "G": 0.15},

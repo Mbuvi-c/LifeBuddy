@@ -2763,11 +2763,15 @@ function GameScreen({ nav, skill, tierData, setSessionResult, settings }) {
     setTasksDone(t => Math.max(0, t - 1));
   };
 
-  const handleSessionEnd = (score, total) => {
+  const handleSessionEnd = (result) => {
     if (sessionEnded) return;
     setSessionEnded(true);
     const elapsed = Math.round((Date.now() - sessionStart.current) / 1000);
-    const stars   = score >= total * 0.85 ? 3 : score >= total * 0.5 ? 2 : 1;
+    const mastery = result?.mastery ?? 0.5;
+    const passed  = result?.passed ?? false;
+    const stars   = mastery >= 0.85 ? 3 : mastery >= 0.5 ? 2 : 1;
+    const score   = passed ? 6 : 3;
+    const total   = 7;
     setSessionResult({ skill:skillData, tasks:total, score, stars, duration:elapsed });
     setTimeout(() => nav("results"), 600);
   };

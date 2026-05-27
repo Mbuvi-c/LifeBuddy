@@ -15,7 +15,7 @@ class SessionLogRequest(BaseModel):
     error_type: Optional[str] = None
     response_time: int = 0
     attempt_number: int = 1
-    skill: str = "daily_routine"
+    skill: str = "money_transactions"
     response_type: str = "correct"
     hints_used: int = 0
     quit_signal: bool = False
