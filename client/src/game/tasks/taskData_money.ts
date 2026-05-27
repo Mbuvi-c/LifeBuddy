@@ -103,13 +103,13 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t1_easy_6',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'true_false', topic: 'identifying coins',
-    question: 'Kenya has a coin worth KES 50.',
+    question: 'Kenya has a coin worth KES 40.',
     options: [
       { id: 'true', label: 'True', correct: true },
       { id: 'false', label: 'False', correct: false },
     ],
-    hint: 'Think about all the coins Kenya has: 1, 5, 10, 20, and...',
-    explanation: 'Kenya has coins worth KES 1, 5, 10, 20, and 50. The KES 50 coin is large and has a distinctive appearance.',
+    hint: 'Think about the less common coins in Kenya — there is one worth KES 40.',
+    explanation: 'Kenya has coins worth KES 1, 5, 10, 20, and 40. The KES 40 coin is less commonly used but is legal tender.',
   },
   {
     id: 'mt_t1_easy_7',
@@ -117,13 +117,13 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     type: 'tap_select', topic: 'identifying notes',
     question: 'You have a green note. Which note is it most likely to be?',
     options: [
-      { id: 'a', label: 'KES 50', correct: true },
-      { id: 'b', label: 'KES 500', correct: false },
+      { id: 'a', label: 'KES 50', correct: false },
+      { id: 'b', label: 'KES 500', correct: true },
       { id: 'c', label: 'KES 1,000', correct: false },
       { id: 'd', label: 'KES 200', correct: false },
     ],
-    hint: 'Each Kenyan note has a unique colour. The KES 50 note is green.',
-    explanation: 'The KES 50 note is predominantly green. Learning note colours helps you identify them quickly without reading the numbers.',
+    hint: 'Each Kenyan note has a unique colour. The green note is a high value one.',
+    explanation: 'The KES 1,000 is brown, KES 500 note is green, KES 200 is blue , KES 100 is purple and KES 50 is reddish.',
   },
 
   // ── Tier 1 / Intermediate ─────────────────────────────────────────────────
