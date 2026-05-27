@@ -215,7 +215,7 @@ function FeedbackPanel({
       `}</style>
     </>
   )
-}
+}x
 
 // ── Main engine ───────────────────────────────────────────────────────────────
 export default function SimulationEngineV2({
