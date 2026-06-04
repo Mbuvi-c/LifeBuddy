@@ -12,9 +12,10 @@ interface TapSelectProps {
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
   hintsAllowed: boolean
+  showHint?: boolean
 }
 
-export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed }: TapSelectProps) {
+export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed, showHint: followUpHint = false }: TapSelectProps) {
   const [selected, setSelected]     = useState<string | null>(null)
   const [revealed, setRevealed]     = useState(false)
   const [showHint, setShowHint]     = useState(false)
@@ -63,6 +64,11 @@ export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed }: T
 
   return (
     <div style={s.wrap}>
+      <style>{`
+        @keyframes pulseHint { 0%,100% { opacity:1; transform:translateX(0); } 50% { opacity:0.4; transform:translateX(-4px); } }
+        .pulse-hint { animation: pulseHint 0.8s ease-in-out infinite !important; }
+      `}</style>
+      
       {/* Question */}
       <div style={s.question}>{task.question}</div>
       {task.context && <div style={s.context}>{task.context}</div>}
@@ -97,6 +103,14 @@ export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed }: T
               )}
               {revealed && !isSelected && isCorrect && (
                 <span style={s.verdict}>✓</span>
+              )}
+              {!revealed && followUpHint && isCorrect && (
+                <span style={{
+                  fontSize: 18,
+                  display: 'inline-block',
+                  animation: 'none',
+                  opacity: 1,
+                }} className="pulse-hint">👈</span>
               )}
             </button>
           )

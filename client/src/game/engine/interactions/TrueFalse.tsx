@@ -12,9 +12,10 @@ interface TrueFalseProps {
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
   hintsAllowed: boolean
+  showHint?: boolean
 }
 
-export default function TrueFalse({ task, learnerId, onAnswer, hintsAllowed }: TrueFalseProps) {
+export default function TrueFalse({ task, learnerId, onAnswer, hintsAllowed, showHint: followUpHint = false }: TrueFalseProps) {
   const [selected, setSelected]   = useState<string | null>(null)
   const [revealed, setRevealed]   = useState(false)
   const [showHint, setShowHint]   = useState(false)
@@ -69,6 +70,7 @@ export default function TrueFalse({ task, learnerId, onAnswer, hintsAllowed }: T
 
   return (
     <div style={s.wrap}>
+      <style>{`@keyframes pulseHint { 0%,100%{opacity:1;transform:translateY(0)} 50%{opacity:0.4;transform:translateY(-4px)} } .pulse-hint{animation:pulseHint 0.8s ease-in-out infinite}`}</style>
       {/* Statement */}
       <div style={s.statement}>{task.question}</div>
 
@@ -85,6 +87,9 @@ export default function TrueFalse({ task, learnerId, onAnswer, hintsAllowed }: T
         >
           <span style={s.tfIcon}>✓</span>
           <span>True</span>
+          {!revealed && followUpHint && correctId === 'true' && (
+            <span className="pulse-hint" style={{ fontSize: 20 }}>👆</span>
+          )}
           {revealed && selected === 'true' && (
             <span style={s.verdict}>{correctId === 'true' ? '✓' : '✗'}</span>
           )}
@@ -101,6 +106,9 @@ export default function TrueFalse({ task, learnerId, onAnswer, hintsAllowed }: T
         >
           <span style={s.tfIcon}>✗</span>
           <span>False</span>
+          {!revealed && followUpHint && correctId === 'false' && (
+            <span className="pulse-hint" style={{ fontSize: 20 }}>👆</span>
+          )}
           {revealed && selected === 'false' && (
             <span style={s.verdict}>{correctId === 'false' ? '✓' : '✗'}</span>
           )}

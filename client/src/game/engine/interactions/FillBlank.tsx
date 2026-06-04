@@ -12,13 +12,14 @@ interface FillBlankProps {
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
   hintsAllowed: boolean
+  showHint?: boolean
 }
 
-export default function FillBlank({ task, learnerId, onAnswer, hintsAllowed }: FillBlankProps) {
+export default function FillBlank({ task, learnerId, onAnswer, hintsAllowed, showHint: followUpHint = false }: FillBlankProps) {
   const [selected, setSelected]   = useState<string | null>(null)
   const [revealed, setRevealed]   = useState(false)
-  const [showHint, setShowHint]   = useState(false)
-  const [hintsUsed, setHintsUsed] = useState(0)
+  const [showHint, setShowHint]   = useState(followUpHint)
+  const [hintsUsed, setHintsUsed] = useState(followUpHint ? 1 : 0)
   const startTime                 = useRef(Date.now())
   const longPressTimer            = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -70,6 +71,7 @@ export default function FillBlank({ task, learnerId, onAnswer, hintsAllowed }: F
 
   return (
     <div style={s.wrap}>
+      <style>{`@keyframes pulseHint{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}} .pulse-hint{animation:pulseHint 0.8s ease-in-out infinite}`}</style>
 
       {/* Sentence with blank */}
       <div style={s.sentenceBox}>
@@ -94,7 +96,13 @@ export default function FillBlank({ task, learnerId, onAnswer, hintsAllowed }: F
         {task.options?.map(option => (
           <button
             key={option.id}
-            style={getOptionStyle(option.id)}
+            style={{
+              ...getOptionStyle(option.id),
+              ...(followUpHint && option.correct && !revealed ? {
+                border: '2px solid #fbbf24',
+                boxShadow: '0 0 12px rgba(251,191,36,0.4)',
+              } : {}),
+            }}
             onMouseEnter={() => handleHoverStart(option.id)}
             onMouseLeave={handleHoverEnd}
             onTouchStart={() => handleTouchStart(option.id)}
@@ -103,6 +111,9 @@ export default function FillBlank({ task, learnerId, onAnswer, hintsAllowed }: F
             disabled={revealed}
           >
             {option.label}
+            {!revealed && followUpHint && option.correct && (
+              <span className="pulse-hint" style={{ fontSize: 14, marginLeft: 4 }}>👆</span>
+            )}
             {revealed && option.correct && <span style={s.tick}> ✓</span>}
             {revealed && selected === option.id && !option.correct && <span style={s.cross}> ✗</span>}
           </button>

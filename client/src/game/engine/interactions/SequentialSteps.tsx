@@ -14,18 +14,26 @@ interface SequentialStepsProps {
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
   hintsAllowed: boolean
+  showHint?: boolean
 }
 
-export default function SequentialSteps({ task, learnerId, onAnswer, hintsAllowed }: SequentialStepsProps) {
-  const steps = task.steps ?? []
+export default function SequentialSteps({ task, learnerId, onAnswer, hintsAllowed, showHint: followUpHint = false }: SequentialStepsProps) {
+  const steps = useState(() => {
+    const arr = [...(task.steps ?? [])]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  })[0]
   const totalSteps = steps.length
 
   // Track the order learner tapped
   const [tappedOrder, setTappedOrder]   = useState<string[]>([])
   const [wrongStep, setWrongStep]       = useState<string | null>(null)
   const [completed, setCompleted]       = useState(false)
-  const [showHint, setShowHint]         = useState(false)
-  const [hintsUsed, setHintsUsed]       = useState(0)
+  const [showHint, setShowHint]         = useState(followUpHint)
+  const [hintsUsed, setHintsUsed]       = useState(followUpHint ? 1 : 0)
   const [mistakes, setMistakes]         = useState(0)
   const startTime                       = useRef(Date.now())
   const longPressTimer                  = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -101,6 +109,7 @@ export default function SequentialSteps({ task, learnerId, onAnswer, hintsAllowe
 
   return (
     <div style={s.wrap}>
+      <style>{`@keyframes pulseHint{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}} .pulse-hint{animation:pulseHint 0.8s ease-in-out infinite}`}</style>
       {/* Instruction */}
       <div style={s.question}>{task.question}</div>
 
@@ -151,6 +160,9 @@ export default function SequentialSteps({ task, learnerId, onAnswer, hintsAllowe
               </span>
 
               <span style={s.stepText}>{step.label}</span>
+              {!isTappedStep && followUpHint && getExpectedNext() === step.id && (
+                <span className="pulse-hint" style={{ fontSize: 14 }}>👆</span>
+              )}
 
               {isTappedStep && (
                 <span style={s.checkmark}>✓</span>

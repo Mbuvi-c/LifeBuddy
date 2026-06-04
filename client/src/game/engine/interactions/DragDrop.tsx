@@ -13,6 +13,7 @@ interface DragDropProps {
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
   hintsAllowed: boolean
+  showHint?: boolean
 }
 
 interface Placement {
@@ -20,15 +21,15 @@ interface Placement {
   zoneId: string
 }
 
-export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: DragDropProps) {
+export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed, showHint: followUpHint = false }: DragDropProps) {
   const items     = task.dragItems ?? []
   const zones     = task.dropZones ?? []
 
   const [placements, setPlacements]   = useState<Placement[]>([])
   const [selected, setSelected]       = useState<string | null>(null)
   const [revealed, setRevealed]       = useState(false)
-  const [showHint, setShowHint]       = useState(false)
-  const [hintsUsed, setHintsUsed]     = useState(0)
+  const [showHint, setShowHint]       = useState(followUpHint)
+  const [hintsUsed, setHintsUsed]     = useState(followUpHint ? 1 : 0)
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const startTime                     = useRef(Date.now())
   const longPressTimer                = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -41,6 +42,13 @@ export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: Dr
 
   const unplacedItems = items.filter(item => !getItemZone(item.id))
   const allPlaced = placements.length === items.length
+
+  // Follow-up hint: find next item to place and its target zone
+  const nextHintItem = followUpHint && !revealed
+    ? unplacedItems.find(item => item.targetZone)
+    : null
+  const nextHintZone = nextHintItem?.targetZone ?? null
+  const isItemSelected = selected !== null
 
   const checkAllCorrect = (currentPlacements: Placement[]) => {
     return currentPlacements.every(p => {
@@ -136,6 +144,7 @@ export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: Dr
 
   return (
     <div style={s.wrap}>
+      <style>{`@keyframes pulseHint{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}} .pulse-hint{animation:pulseHint 0.8s ease-in-out infinite}`}</style>
 
       {/* Question */}
       <div style={s.question}>{task.question}</div>
@@ -149,7 +158,13 @@ export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: Dr
             {unplacedItems.map(item => (
               <div
                 key={item.id}
-                style={getItemStyle(item.id)}
+                style={{
+                  ...getItemStyle(item.id),
+                  ...(followUpHint && nextHintItem?.id === item.id && !selected ? {
+                    border: '2px solid #fbbf24',
+                    boxShadow: '0 0 12px rgba(251,191,36,0.4)',
+                  } : {}),
+                }}
                 draggable
                 onDragStart={() => handleDragStart(item.id)}
                 onClick={() => handleItemTap(item.id)}
@@ -159,6 +174,9 @@ export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: Dr
                 onMouseLeave={() => !revealed && stop()}
               >
                 {item.label}
+                {followUpHint && nextHintItem?.id === item.id && !selected && (
+                  <span className="pulse-hint" style={{ fontSize: 14, marginLeft: 4 }}>👆</span>
+                )}
               </div>
             ))}
           </div>
@@ -185,12 +203,22 @@ export default function DragDrop({ task, learnerId, onAnswer, hintsAllowed }: Dr
               style={{
                 ...s.zone,
                 ...(isActive && !revealed ? s.zoneActive : {}),
+                ...(followUpHint && isItemSelected && nextHintZone === zone.id && !revealed ? {
+                  border: '2px dashed #fbbf24',
+                  background: 'rgba(251,191,36,0.08)',
+                  boxShadow: '0 0 16px rgba(251,191,36,0.2)',
+                } : {}),
               }}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, zone.id)}
               onClick={() => handleZoneTap(zone.id)}
             >
-              <div style={s.zoneLabel}>{zone.label}</div>
+              <div style={s.zoneLabel}>
+                {zone.label}
+                {followUpHint && isItemSelected && nextHintZone === zone.id && !revealed && (
+                  <span className="pulse-hint" style={{ fontSize: 14, marginLeft: 6 }}>👆 Drop here</span>
+                )}
+              </div>
               <div style={s.zoneItems}>
                 {zoneItems.length === 0 && (
                   <div style={s.zonePlaceholder}>

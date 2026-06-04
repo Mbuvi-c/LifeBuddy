@@ -596,11 +596,15 @@ function TransitionScreen({ tier, difficulty, onReady }: { tier: 1|2|3; difficul
 }
 
 // ── Banners ───────────────────────────────────────────────────────────────────
-function FollowUpBanner({ onDismiss }: { onDismiss: () => void }) {
+function FollowUpBanner({ onDismiss, difficulty, tier }: { onDismiss: () => void; difficulty: Difficulty; tier: 1|2|3 }) {
   return (
     <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 250, background: '#1e2130', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 12, maxWidth: 360, animation: 'slideUp 0.3s ease' }}>
       <span style={{ fontSize: 22 }}>💪</span>
-      <p style={{ fontSize: 13, color: '#f0f1f5', lineHeight: 1.5, margin: 0, flex: 1 }}>Let's practise a couple more!</p>
+      <p style={{ fontSize: 13, color: '#f0f1f5', lineHeight: 1.5, margin: 0, flex: 1 }}>{difficulty === 'easy'
+        ? "Let's try a couple more — I'll help this time! 💡"
+        : difficulty === 'intermediate'
+        ? `You're on Intermediate now — let's practise a few together! 💡`
+        : `You're on Advanced — these are tough, I'll guide you! 💡`}</p>
       <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: '#6b7290', cursor: 'pointer', fontSize: 16 }}>✕</button>
       <style>{`@keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
     </div>
@@ -612,7 +616,7 @@ function GentleForwardBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 250, background: '#1e2130', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 16, padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 12, maxWidth: 400, animation: 'slideUp 0.3s ease' }}>
       <span style={{ fontSize: 22 }}>💪</span>
-      <p style={{ fontSize: 13, color: '#f0f1f5', lineHeight: 1.5, margin: 0 }}>This one was tricky — let's keep going and come back to it later!</p>
+      <p style={{ fontSize: 13, color: '#f0f1f5', lineHeight: 1.5, margin: 0 }}>Good effort! We'll revisit these topics in future sessions. Let's keep moving! 🚀</p>
       <style>{`@keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
     </div>
   )
@@ -648,16 +652,48 @@ function FeedbackPanel({ correct, explanation, isLast, onNext }: { correct: bool
 }
 
 // ── Quit confirmation ─────────────────────────────────────────────────────────
-function QuitConfirm({ onStay, onQuit }: { onStay: () => void; onQuit: () => void }) {
+function QuitConfirm({ onStay, onQuit, tier, difficulty }: {
+  onStay: () => void; onQuit: () => void; tier: 1|2|3; difficulty: Difficulty
+}) {
+  const [showSaved, setShowSaved] = useState(false)
+
+  function handleQuit() {
+    setShowSaved(true)
+    setTimeout(() => onQuit(), 7000)
+  }
+
+  if (showSaved) return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#1e2130', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '32px 28px', width: 340, textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+        <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f1f5', marginBottom: 10 }}>Good effort today!</p>
+        <div style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 12, padding: '14px 16px', marginBottom: 14, textAlign: 'left' }}>
+          <p style={{ fontSize: 12, color: '#4ade80', fontWeight: 600, marginBottom: 6 }}>📍 Progress saved</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+            You reached <strong style={{ color: '#f0f1f5' }}>Level {tier} · {DIFFICULTY_LABEL[difficulty]}</strong>. We'll pick up from here next time.
+          </p>
+        </div>
+        <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
+          <p style={{ fontSize: 12, color: '#c084fc', fontWeight: 600, marginBottom: 6 }}>🔄 Fresh start on mastery</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+            To keep your scores accurate, mastery will refresh next session. Half of what you earned today carries forward!
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#1e2130', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '32px 28px', width: 320, textAlign: 'center' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>⏸️</div>
-        <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f1f5', marginBottom: 8 }}>Quit this session?</p>
-        <p style={{ fontSize: 13, color: '#9da3b8', marginBottom: 24, lineHeight: 1.5 }}>Your progress in this round won't be saved.</p>
+        <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f1f5', marginBottom: 8 }}>Take a break?</p>
+        <p style={{ fontSize: 13, color: '#9da3b8', marginBottom: 24, lineHeight: 1.5 }}>
+          Your progress will be saved. Mastery will refresh next session so your scores stay accurate.
+        </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onStay} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#f0f1f5', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Keep going</button>
-          <button onClick={onQuit} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Quit</button>
+          <button onClick={handleQuit} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Save & quit</button>
         </div>
       </div>
     </div>
@@ -681,6 +717,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const [logging,     setLogging]       = useState(false)
   const [consecutiveWrong, setConsecutiveWrong] = useState(0)
   const [showFollowUpBanner, setShowFollowUpBanner] = useState(false)
+  const [followUpDiff, setFollowUpDiff] = useState<Difficulty>('easy')
   const [showGentleBanner,   setShowGentleBanner]   = useState(false)
   const [showCelebration,    setShowCelebration]     = useState(false)
   const [nextTransition,     setNextTransition]      = useState<{ tier: 1|2|3; diff: Difficulty } | null>(null)
@@ -696,6 +733,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const taskStartTime  = useRef<number>(Date.now())
   const sessionAnswers = useRef<AnswerRecord[]>([])
   const answeredIds    = useRef<Set<string>>(new Set())
+  const queueSize      = useRef<number>(7)
 
   useEffect(() => {
     startSession(learnerId).then(ok => { if (!ok) console.warn('Session start failed') })
@@ -714,6 +752,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     }
     const sliced = tasks.slice(0, followUp ? 3 : 7)
     console.log('loadQueue:', t, d, 'found:', sliced.length, 'followUp:', followUp)
+    queueSize.current = sliced.length
     setTaskQueue(sliced)
     setTaskIndex(0); setFeedback(null); setConsecutiveWrong(0)
     taskStartTime.current = Date.now()
@@ -723,12 +762,10 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const currentTask = taskQueue[taskIndex] ?? null
   const totalTasks  = taskQueue.length
   const taskNumber  = taskIndex + 1
-  const isLast      = taskIndex + 1 >= taskQueue.length
+  const isLast      = taskIndex + 1 >= queueSize.current
 
   async function handleAnswer(correct: boolean, responseTime: number, hintsUsed: number) {
     if (!currentTask || feedback || logging) return
-    if (answeredIds.current.has(currentTask.id)) return
-    answeredIds.current.add(currentTask.id)
     setLogging(true)
     let mastery = prevMastery
     let frustrationDelta = 0
@@ -757,9 +794,9 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     setAnswers(prev => [...prev, record])
     sessionAnswers.current = [...sessionAnswers.current, record]
     setDoneIds(prev => [...prev, currentTask.id])
-    setFeedback({ correct, mastery })
-    setConsecutiveWrong(correct ? 0 : consecutiveWrong + 1)
     setLogging(false)
+    setConsecutiveWrong(correct ? 0 : consecutiveWrong + 1)
+    setFeedback({ correct, mastery })
   }
 
   function evaluateSet(currentAnswers: AnswerRecord[]) {
@@ -803,9 +840,11 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
         setShowProgressReport(true)
       } else {
         setPhase('followup')
+        setFollowUpDiff(currentDiff)
         setShowFollowUpBanner(true)
         setAnswers([])
-        loadQueue(currentTier, currentDiff, [...doneIds], true)
+        answeredIds.current = new Set()
+        loadQueue(currentTier, currentDiff, [], true)
       }
     } else if (phase === 'followup') {
       setDifficultyReports(prev => [...prev, report])
@@ -835,13 +874,11 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   function handleTransitionDone() {
     if (nextTransition) {
       const next = nextTransition
-      const tasks = getTasksForDifficulty(allTasks, next.tier, next.diff, [])
-      setTaskQueue(tasks.slice(0, 7))
-      setTaskIndex(0); setFeedback(null); setConsecutiveWrong(0)
-      taskStartTime.current = Date.now()
+      loadQueue(next.tier, next.diff, [])
       setCurrentTier(next.tier); setCurrentDiff(next.diff)
       setPhase('playing'); setAnswers([])
       setNextTransition(null); setShowTransition(false)
+      setShowFollowUpBanner(false)
     }
   }
 
@@ -855,7 +892,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   }
 
   function renderInteraction(task: Task) {
-    const commonProps = { task, learnerId, onAnswer: handleAnswer, hintsAllowed: true }
+    const commonProps = { task, learnerId, onAnswer: handleAnswer, hintsAllowed: true, showHint: phase === 'followup' }
     switch (task.type) {
       case 'tap_select':       return <TapSelect       {...commonProps} />
       case 'true_false':       return <TrueFalse       {...commonProps} />
@@ -905,11 +942,11 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0b0f', display: 'flex', flexDirection: 'column' }}>
-      {showQuit && <QuitConfirm onStay={() => setShowQuit(false)} onQuit={() => { setShowQuit(false); onGoBack?.() }} />}
+      {showQuit && <QuitConfirm onStay={() => setShowQuit(false)} onQuit={() => { setShowQuit(false); onGoBack?.() }} tier={currentTier} difficulty={currentDiff} />}
       {feedback && currentTask && <FeedbackPanel correct={feedback.correct} explanation={currentTask.explanation} isLast={isLast} onNext={handleNext} />}
       {showCelebration && <CelebrationPopup onContinue={handleCelebrationDone} nextLabel={nextTransition ? `Starting ${DIFFICULTY_LABEL[nextTransition.diff]}!` : 'Session complete!'} />}
       {showTransition && nextTransition && <TransitionScreen tier={nextTransition.tier} difficulty={nextTransition.diff} onReady={handleTransitionDone} />}
-      {showFollowUpBanner && <FollowUpBanner onDismiss={() => setShowFollowUpBanner(false)} />}
+      {showFollowUpBanner && <FollowUpBanner onDismiss={() => setShowFollowUpBanner(false)} difficulty={followUpDiff} tier={currentTier} />}
       {showGentleBanner && <GentleForwardBanner onDismiss={() => setShowGentleBanner(false)} />}
 
       {/* Header */}
@@ -941,7 +978,9 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       {/* Content */}
       {currentTask && (
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px 40px', width: '100%', boxSizing: 'border-box' }}>
-          {renderInteraction(currentTask)}
+          <div key={`${currentTask.id}-${taskIndex}-${phase}`}>
+            {renderInteraction(currentTask)}
+          </div>
         </div>
       )}
     </div>

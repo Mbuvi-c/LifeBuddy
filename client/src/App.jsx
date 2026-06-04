@@ -2917,7 +2917,7 @@ function Results({ nav, skill, result }) {
         </div>
         <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
           <button className="btn btn-primary btn-lg" onClick={() => nav("game")}>Play Again</button>
-          <button className="btn btn-ghost btn-lg" onClick={() => nav("simulations")}>Try Another Skill</button>
+          <button className="btn btn-ghost btn-lg" onClick={() => nav("simulations")}>Next Skill →</button>
         </div>
       </div>
     </div>
