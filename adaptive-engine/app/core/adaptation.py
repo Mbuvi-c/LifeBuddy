@@ -69,7 +69,10 @@ def reset_frustration_for_new_session(db: Session, learner_id: str):
     # 2. Apply mastery decay
     skills         = result.bkt_profile or {}
     last_practiced = result.last_practiced or {}
+    print("DEBUG bkt_profile before decay:", result.bkt_profile)
+    print("DEBUG last_practiced:", result.last_practiced)
     decayed_skills = apply_mastery_decay(skills, last_practiced)
+    print("DEBUG bkt_profile after decay:", decayed_skills)
 
     # 3. Persist both updates
     db.execute(

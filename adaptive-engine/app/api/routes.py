@@ -110,6 +110,53 @@ def get_adaptation(learner_id: str, db: Session = Depends(get_db)):
     adaptation = process_adaptation(db=db, learner_id=learner_id)
     return adaptation
 
+@router.post("/learner/reset/{learner_id}")
+def reset_learner(learner_id: str, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+
+    # Collect session IDs for this learner before deleting
+    session_rows = db.execute(
+        text("SELECT id FROM sessions WHERE learner_id = :lid"),
+        {"lid": learner_id}
+    ).fetchall()
+    session_ids = [str(r.id) for r in session_rows]
+
+    if session_ids:
+        id_list = tuple(session_ids)
+        db.execute(
+            text("DELETE FROM task_events WHERE session_id IN :ids"),
+            {"ids": id_list}
+        )
+        db.execute(
+            text("DELETE FROM adaptation_logs WHERE session_id IN :ids"),
+            {"ids": id_list}
+        )
+        db.execute(
+            text("DELETE FROM frustration_log WHERE session_id IN :ids"),
+            {"ids": id_list}
+        )
+
+    db.execute(
+        text("DELETE FROM frustration_log WHERE learner_id = :lid"),
+        {"lid": learner_id}
+    )
+    db.execute(
+        text("DELETE FROM sessions WHERE learner_id = :lid"),
+        {"lid": learner_id}
+    )
+    db.execute(
+        text("""UPDATE learners
+                SET bkt_profile = '{}'::jsonb,
+                    frustration_index = 0,
+                    current_difficulty_tier = 1,
+                    peak_frustration_count = 0
+                WHERE id = :lid"""),
+        {"lid": learner_id}
+    )
+    db.commit()
+    return {"success": True, "learner_id": learner_id}
+
+
 @router.get("/health")
 def health_check():
     return {

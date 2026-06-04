@@ -34,7 +34,7 @@ SKILLS = {
     # community_safety       — mixed familiarity. low-moderate prior
     # workplace_readiness    — very low prior for most learners. slow learning
 
-    "money_transactions":     {"L": 0.15, "T": 0.09, "S": 0.10, "G": 0.25},
+    "money_transactions":     {"L": 0.15, "T": 0.05, "S": 0.18, "G": 0.35},
     "time_planning":          {"L": 0.10, "T": 0.12, "S": 0.12, "G": 0.18},
     "digital_safety":         {"L": 0.12, "T": 0.15, "S": 0.10, "G": 0.20},
     "mobile_money":           {"L": 0.05, "T": 0.10, "S": 0.08, "G": 0.15},
@@ -199,6 +199,7 @@ def bkt_update(L: float, T: float, S: float, G: float, response_type: str, respo
 
     # Apply learning transition — probability learner just acquired the skill
     L_new = posterior + (1 - posterior) * T
+    L_new = min(0.99, L_new)
 
     return round(min(max(L_new, 0.0), 1.0), 4)
 
@@ -455,6 +456,8 @@ def apply_mastery_decay(skills: dict, last_practiced: dict) -> dict:
                 pass  # Bad date format — skip decay for this skill
 
         updated_skills[skill] = {**data, "mastery": current_mastery}
+
+    return updated_skills
 
     return updated_skills
 

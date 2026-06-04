@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { MONEY_TRANSACTIONS_TASKS } from '../tasks/taskData_money'
-import { startSession, logAttempt, endSession, getNextSkill } from './adaptiveClient'
+import { startSession, logAttempt, endSession, getNextSkill, getAdaptation } from './adaptiveClient'
 import TapSelect       from './interactions/TapSelect'
 import TrueFalse       from './interactions/TrueFalse'
 import FillBlank       from './interactions/FillBlank'
@@ -234,12 +234,13 @@ function DevProgressReport({ report, skillName, overallMastery, nextLabel, onCon
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
             <div style={{ fontSize: 15, fontWeight: 600, color: '#f0f1f5' }}>{skillName}</div>
             <span style={{
-              fontSize: 10, color: report.passed ? '#4ade80' : '#c084fc',
-              background: report.passed ? 'rgba(74,222,128,0.1)' : 'rgba(192,132,252,0.1)',
-              border: `1px solid ${report.passed ? 'rgba(74,222,128,0.2)' : 'rgba(192,132,252,0.2)'}`,
+              fontSize: 10,
+              color: report.promotedWithRemediation ? '#fbbf24' : report.passed ? '#4ade80' : '#c084fc',
+              background: report.promotedWithRemediation ? 'rgba(251,191,36,0.1)' : report.passed ? 'rgba(74,222,128,0.1)' : 'rgba(192,132,252,0.1)',
+              border: `1px solid ${report.promotedWithRemediation ? 'rgba(251,191,36,0.2)' : report.passed ? 'rgba(74,222,128,0.2)' : 'rgba(192,132,252,0.2)'}`,
               borderRadius: 4, padding: '3px 10px', fontWeight: 600,
             }}>
-              {report.passed ? 'Promoted ✓' : 'Follow-up given'}
+              {report.promotedWithRemediation ? 'Follow-up given' : report.passed ? 'Promoted ✓' : 'Follow-up given'}
             </span>
           </div>
         </div>
@@ -466,8 +467,8 @@ function SessionSummaryScreen({ skillName, reports, sessionMastery, overallMaste
                   <span style={{ fontSize: 13, color: '#9da3b8' }}>L{r.tier} · {DIFFICULTY_LABEL[r.difficulty]}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{r.correct}/{r.total}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: r.passed ? '#4ade80' : '#c084fc', background: r.passed ? 'rgba(74,222,128,0.1)' : 'rgba(192,132,252,0.1)', border: `1px solid ${r.passed ? 'rgba(74,222,128,0.2)' : 'rgba(192,132,252,0.2)'}`, borderRadius: 6, padding: '2px 8px' }}>
-                      {r.passed ? '✓ Passed' : '↑ Follow-up'}
+                    <span style={{ fontSize: 11, fontWeight: 600, color: r.promotedWithRemediation ? '#fbbf24' : r.passed ? '#4ade80' : '#c084fc', background: r.promotedWithRemediation ? 'rgba(251,191,36,0.1)' : r.passed ? 'rgba(74,222,128,0.1)' : 'rgba(192,132,252,0.1)', border: `1px solid ${r.promotedWithRemediation ? 'rgba(251,191,36,0.2)' : r.passed ? 'rgba(74,222,128,0.2)' : 'rgba(192,132,252,0.2)'}`, borderRadius: 6, padding: '2px 8px' }}>
+                      {r.promotedWithRemediation ? '↑ Follow-up given' : r.passed ? '✓ Passed' : '↑ Follow-up'}
                     </span>
                   </div>
                 </div>
@@ -489,7 +490,7 @@ function SessionSummaryScreen({ skillName, reports, sessionMastery, overallMaste
             <div key={ri} style={{ marginBottom: 20, background: '#111217', borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ background: 'rgba(13,35,24,0.98)', padding: '10px 14px', borderBottom: '1px solid rgba(74,222,128,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: '#4ade80' }}>L{r.tier} · {DIFFICULTY_LABEL[r.difficulty]}</span>
-                <span style={{ fontSize: 10, color: r.passed ? '#4ade80' : '#c084fc' }}>{r.passed ? 'Promoted ✓' : 'Follow-up'} · BKT {r.avgMastery.toFixed(3)}</span>
+                <span style={{ fontSize: 10, color: r.promotedWithRemediation ? '#fbbf24' : r.passed ? '#4ade80' : '#c084fc' }}>{r.promotedWithRemediation ? 'Follow-up given' : r.passed ? 'Promoted ✓' : 'Follow-up'} · BKT {r.avgMastery.toFixed(3)}</span>
               </div>
               <div style={{ padding: '8px 14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 28px 28px 36px 40px 40px 46px', gap: 3, padding: '0 2px 5px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }}>
@@ -741,6 +742,12 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
   useEffect(() => {
     startSession(learnerId).then(ok => { if (!ok) console.warn('Session start failed') })
+    getAdaptation(learnerId).then(adaptation => {
+      if (adaptation?.mastery) {
+        setOverallMastery(adaptation.mastery)
+        setPrevMastery(adaptation.mastery)
+      }
+    })
     mainAnswers.current = []
     loadQueue(currentTier, currentDiff, [])
   }, [])
@@ -841,7 +848,11 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     if (!isLast) { setTaskIndex(i => i + 1); return }
 
     const currentAnswers = mainAnswers.current
-    const { passed, avgMastery } = evaluateSet(currentAnswers)
+    const finalMastery = currentAnswers.length > 0 ? currentAnswers[currentAnswers.length - 1]?.mastery ?? 0 : 0
+    const accuracy = currentAnswers.filter(a => a.correct).length / (currentAnswers.length || 1)
+    const promotionScore = (finalMastery * 0.70) + (accuracy * 0.30)
+    const passed = promotionScore >= 0.50
+    const avgMastery = currentAnswers.reduce((s, a) => s + a.mastery, 0) / (currentAnswers.length || 1)
     const report = buildReport(currentAnswers, currentTier, currentDiff, passed, avgMastery)
 
     if (phase === 'playing') {
@@ -854,12 +865,15 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       } else {
         originalAnswers.current = [...mainAnswers.current]
         mainAnswers.current = []
+        const followUpExcludeIds = [...answeredIds.current]
         setPhase('followup')
         setFollowUpDiff(currentDiff)
         setShowFollowUpBanner(true)
         setAnswers([])
         answeredIds.current = new Set()
-        loadQueue(currentTier, currentDiff, [], true)
+        const wrongTopics = originalAnswers.current.filter(a => !a.correct).map(a => a.topic)
+        console.log('follow-up loadQueue — wrongTopics:', wrongTopics, 'excludeIds:', followUpExcludeIds, 'total tasks available:', allTasks.length)
+        loadQueue(currentTier, currentDiff, followUpExcludeIds, true, originalAnswers.current)
       }
     } else if (phase === 'followup') {
       const remediationReport = buildReport(originalAnswers.current, currentTier, currentDiff, passed, avgMastery, true)
