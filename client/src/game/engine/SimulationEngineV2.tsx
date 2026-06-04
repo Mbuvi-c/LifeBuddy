@@ -763,7 +763,6 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       tasks = getTasksForDifficulty(allTasks, t, d, exclude)
     }
     const sliced = tasks.slice(0, followUp ? 3 : 7)
-    console.log('loadQueue:', t, d, 'found:', sliced.length, 'followUp:', followUp)
     queueSize.current = sliced.length
     setTaskQueue(sliced)
     setTaskIndex(0); setFeedback(null); setConsecutiveWrong(0)
@@ -777,7 +776,6 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const isLast      = taskIndex + 1 >= queueSize.current
 
   async function handleAnswer(correct: boolean, responseTime: number, hintsUsed: number) {
-    console.log('handleAnswer called:', correct, 'responseTime:', responseTime, 'hintsUsed:', hintsUsed)
     if (isHandlingAnswer.current) return
     isHandlingAnswer.current = true
     if (!currentTask || feedback || logging) { isHandlingAnswer.current = false; return }
@@ -810,7 +808,6 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     mainAnswers.current = nextAnswers
     setAnswers(nextAnswers)
     sessionAnswers.current = [...sessionAnswers.current, record]
-    console.log('answer recorded, answers array length:', sessionAnswers.current.length, 'last answer correct:', sessionAnswers.current[sessionAnswers.current.length-1]?.correct)
     setDoneIds(prev => [...prev, currentTask.id])
     setLogging(false)
     setConsecutiveWrong(correct ? 0 : consecutiveWrong + 1)
@@ -871,8 +868,6 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
         setShowFollowUpBanner(true)
         setAnswers([])
         answeredIds.current = new Set()
-        const wrongTopics = originalAnswers.current.filter(a => !a.correct).map(a => a.topic)
-        console.log('follow-up loadQueue — wrongTopics:', wrongTopics, 'excludeIds:', followUpExcludeIds, 'total tasks available:', allTasks.length)
         loadQueue(currentTier, currentDiff, followUpExcludeIds, true, originalAnswers.current)
       }
     } else if (phase === 'followup') {
