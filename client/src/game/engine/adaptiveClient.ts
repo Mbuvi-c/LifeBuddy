@@ -165,3 +165,35 @@ export async function getNextSkill(learnerId: string): Promise<string | null> {
     return null
   }
 }
+
+export async function createLearner(learnerData: {
+  name: string
+  caregiverName?: string
+  dateOfBirth?: string
+  diagnosis?: string
+  independenceLevel?: string
+  communicationStyle?: string
+  readingLevel?: string
+  consentType?: string
+}): Promise<{ success: boolean; learner_id: string; name: string } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/adapt/learner/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: learnerData.name,
+        caregiver_name: learnerData.caregiverName ?? '',
+        date_of_birth: learnerData.dateOfBirth ?? '',
+        diagnosis: learnerData.diagnosis ?? '',
+        independence_level: learnerData.independenceLevel ?? 'needs_prompting',
+        communication_style: learnerData.communicationStyle ?? 'verbal',
+        reading_level: learnerData.readingLevel ?? 'emerging',
+        consent_type: learnerData.consentType ?? 'pre_approved',
+      }),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
+}

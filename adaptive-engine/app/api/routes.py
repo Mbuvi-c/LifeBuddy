@@ -157,6 +157,32 @@ def reset_learner(learner_id: str, db: Session = Depends(get_db)):
     return {"success": True, "learner_id": learner_id}
 
 
+class LearnerCreateRequest(BaseModel):
+    name:                 str
+    caregiver_name:       str = ""
+    date_of_birth:        str = ""
+    diagnosis:            str = ""
+    independence_level:   str = "needs_prompting"
+    communication_style:  str = "verbal"
+    reading_level:        str = "emerging"
+    consent_type:         str = "pre_approved"
+
+@router.post("/learner/create")
+def create_learner(request: LearnerCreateRequest, db: Session = Depends(get_db)):
+    import uuid
+    from sqlalchemy import text
+    new_uuid = uuid.uuid4()
+    db.execute(
+        text("""INSERT INTO learners
+                (id, name, learner_code, bkt_profile, frustration_index,
+                 current_difficulty_tier, consecutive_tier_signal, peak_frustration_count)
+                VALUES (:id, :name, :learner_code, '{}'::jsonb, 0, 1, 0, 0)"""),
+        {"id": str(new_uuid), "name": request.name, "learner_code": str(new_uuid)[:8].upper()}
+    )
+    db.commit()
+    return {"success": True, "learner_id": str(new_uuid), "name": request.name}
+
+
 @router.get("/health")
 def health_check():
     return {

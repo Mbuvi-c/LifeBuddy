@@ -704,6 +704,8 @@ function QuitConfirm({ onStay, onQuit, tier, difficulty }: {
 
 // ── Main engine ───────────────────────────────────────────────────────────────
 export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSessionComplete, onGoBack }: SimulationEngineV2Props) {
+  const resolvedLearnerId = localStorage.getItem('lifebuddy_learner_id') || learnerId
+
   const allTasks  = SKILL_TASK_MAP[skillId] ?? MONEY_TRANSACTIONS_TASKS
   const skillName = SKILL_NAMES[skillId] ?? skillId
 
@@ -741,8 +743,8 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const isHandlingAnswer = useRef(false)
 
   useEffect(() => {
-    startSession(learnerId).then(ok => { if (!ok) console.warn('Session start failed') })
-    getAdaptation(learnerId).then(adaptation => {
+    startSession(resolvedLearnerId).then(ok => { if (!ok) console.warn('Session start failed') })
+    getAdaptation(resolvedLearnerId).then(adaptation => {
       if (adaptation?.mastery) {
         setOverallMastery(adaptation.mastery)
         setPrevMastery(adaptation.mastery)
@@ -784,7 +786,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     let frustrationDelta = 0
     try {
       const response = await logAttempt({
-        learner_id: learnerId, simulation_type: 'skill_simulation',
+        learner_id: resolvedLearnerId, simulation_type: 'skill_simulation',
         task_type: currentTask.type, success: correct, skill: skillId,
         response_type: correct ? 'correct' : 'incorrect',
         hints_used: hintsUsed, quit_signal: false,
@@ -835,7 +837,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
   async function fetchNextSkill() {
     try {
-      const res = await getNextSkill(learnerId)
+      const res = await getNextSkill(resolvedLearnerId)
       if (res) setRecommendedSkill(res)
     } catch { /* use default */ }
   }
@@ -910,7 +912,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
   async function handleSessionComplete() {
     await fetchNextSkill()
-    try { await endSession(learnerId, difficultyReports.some(r => r.promotedWithRemediation)) } catch { /* ignore */ }
+    try { await endSession(resolvedLearnerId, difficultyReports.some(r => r.promotedWithRemediation)) } catch { /* ignore */ }
     setShowSummary(true)
     const sessionMastery = sessionAnswers.current.length > 0
       ? sessionAnswers.current.reduce((s, a) => s + a.mastery, 0) / sessionAnswers.current.length : 0.15
@@ -918,7 +920,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   }
 
   function renderInteraction(task: Task) {
-    const commonProps = { task, learnerId, onAnswer: handleAnswer, hintsAllowed: true, showHint: phase === 'followup' }
+    const commonProps = { task, learnerId: resolvedLearnerId, onAnswer: handleAnswer, hintsAllowed: true, showHint: phase === 'followup' }
     switch (task.type) {
       case 'tap_select':       return <TapSelect       {...commonProps} />
       case 'true_false':       return <TrueFalse       {...commonProps} />

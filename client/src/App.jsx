@@ -1,5 +1,6 @@
 import SimulationEngine from './game/engine/SimulationEngineV2';
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createLearner } from './game/engine/adaptiveClient';
 
 // ─────────────────────────────────────────────
 // VOICE HELPER — human-like speech
@@ -2199,7 +2200,7 @@ function Assessment({ nav, settings, user, setTierData }) {
 
   useEffect(() => {
     if (subPhase !== "cg_to_learner") return
-    const t = setTimeout(() => setSubPhase("learner"), 5000)
+    const t = setTimeout(() => setSubPhase("learner"), 1000)
     return () => clearTimeout(t)
   }, [subPhase])
 
@@ -2209,7 +2210,7 @@ function Assessment({ nav, settings, user, setTierData }) {
       setSkillIndex(si => si + 1)
       setTaskIndex(0)
       setSubPhase("caregiver")
-    }, 7000)
+    }, 1000)
     return () => clearTimeout(t)
   }, [subPhase])
 
@@ -2266,12 +2267,31 @@ function Assessment({ nav, settings, user, setTierData }) {
   }
 
   async function handleConfirmConsent() {
+    let learnerId = "8312fa0c-9b5f-46d6-94df-40552fc6cc7c"
+    try {
+      const created = await createLearner({
+        name:               user?.learnerName      || "Learner",
+        caregiverName:      user?.caregiverName    || "",
+        dateOfBirth:        user?.dob              || "",
+        diagnosis:          user?.diagnosis        || "",
+        independenceLevel:  user?.independence     || "needs_prompting",
+        communicationStyle: user?.communicationStyle || "verbal",
+        readingLevel:       user?.readingLevel     || "emerging",
+        consentType:        consentType,
+      })
+      if (created?.learner_id) {
+        learnerId = created.learner_id
+        localStorage.setItem("lifebuddy_learner_id", learnerId)
+      }
+    } catch (e) {
+      console.warn("createLearner failed", e)
+    }
     try {
       await fetch("http://127.0.0.1:8000/adapt/onboarding/baseline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          learner_id:        "8312fa0c-9b5f-46d6-94df-40552fc6cc7c",
+          learner_id:        learnerId,
           skill_baselines:   pl0Results,
           consent_type:      consentType,
           recommended_skill: recommendedSkill,
@@ -2585,12 +2605,12 @@ function Home({ nav, user, tierData, settings, ThemeToggle }) {
               {/* Per-skill tier badges */}
               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
                 {SKILLS.map(s => (
-                  <Tip key={s.key} label={`${s.name}: currently on ${TIER_CFG[tierData[s.key]].label}. ${s.tooltip}`}>
-                    <span className={`badge ${TIER_CFG[tierData[s.key]].cls}`} style={{cursor:"default",fontSize:11}}>
+                  <Tip key={s.key} label={`${s.name}: currently on ${(TIER_CFG[tierData[s.key] ?? 1] ?? TIER_CFG[1]).label}. ${s.tooltip}`}>
+                    <span className={`badge ${(TIER_CFG[tierData[s.key] ?? 1] ?? TIER_CFG[1]).cls}`} style={{cursor:"default",fontSize:11}}>
                       {s.key==="hygiene"
                         ? <span style={{display:"inline-flex",verticalAlign:"middle"}}><HygieneSkillIcon size={13}/></span>
                         : s.icon
-                      } {TIER_CFG[tierData[s.key]].short}
+                      } {(TIER_CFG[tierData[s.key] ?? 1] ?? TIER_CFG[1]).short}
                     </span>
                   </Tip>
                 ))}
@@ -2702,7 +2722,7 @@ function Simulations({ nav, tierData, setActiveSkill, settings }) {
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4,flexWrap:"wrap"}}>
                       <h3 style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:700,color:"var(--text)"}}>{sim.name}</h3>
-                      <span className={`badge ${TIER_CFG[tier].cls}`} style={{cursor:"default"}} title={`Currently on ${TIER_CFG[tier].label}`}>{TIER_CFG[tier].emoji} {TIER_CFG[tier].label}</span>
+                      <span className={`badge ${(TIER_CFG[tier ?? 1] ?? TIER_CFG[1]).cls}`} style={{cursor:"default"}} title={`Currently on ${(TIER_CFG[tier ?? 1] ?? TIER_CFG[1]).label}`}>{(TIER_CFG[tier ?? 1] ?? TIER_CFG[1]).emoji} {(TIER_CFG[tier ?? 1] ?? TIER_CFG[1]).label}</span>
                     </div>
                     <p style={{color:"var(--text2)",fontSize:13,marginBottom:10}}>{sim.desc}</p>
                     <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2999,7 +3019,7 @@ function ProfilePage({ nav, user, setUser, tierData, settings }) {
               <div key={s.key} style={{background:"var(--bg3)",borderRadius:"var(--radius)",padding:"14px 12px",textAlign:"center",border:"1px solid var(--border)",cursor:"default"}} title={s.tooltip}>
                 <div style={{fontSize:26,marginBottom:6}}>{s.icon}</div>
                 <div style={{fontSize:11,color:"var(--text3)",marginBottom:6}}>{s.name.split(" ")[0]}</div>
-                <span className={`badge ${TIER_CFG[tierData[s.key]].cls}`} style={{fontSize:11}}>{TIER_CFG[tierData[s.key]].label}</span>
+                <span className={`badge ${TIER_CFG[tierData[s.key] ?? 1] ?? TIER_CFG[1].cls}`} style={{fontSize:11}}>{TIER_CFG[tierData[s.key] ?? 1] ?? TIER_CFG[1].label}</span>
               </div>
             ))}
           </div>
