@@ -853,8 +853,8 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       setTimeout(() => {
         setShowGentleBanner(false)
         setNextTransition(next)
-        if (next) setShowTransition(true)
-        else handleSessionComplete()
+        setCurrentReport(report)
+        setShowProgressReport(true)
       }, 3500)
     }
   }
