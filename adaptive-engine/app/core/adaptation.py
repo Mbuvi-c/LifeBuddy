@@ -308,6 +308,27 @@ def process_adaptation(db: Session, learner_id: str, skill: str = "money_transac
     }
 
 
+async def store_onboarding_baseline(learner_id: str, skill_baselines: dict, db: Session) -> dict:
+    """
+    Stores P(L0) values from the baseline assessment into the learner's BKT profile.
+    Called once after onboarding completes. Sets initial mastery per skill without
+    incrementing attempt counts.
+    """
+    current = get_bkt_profile(db, learner_id)
+    skills  = current.get("skills", {}) if current else {}
+
+    for skill_id, pl0 in skill_baselines.items():
+        existing = skills.get(skill_id, {"mastery": pl0, "attempts": 0, "consecutive_correct": 0})
+        skills[skill_id] = {**existing, "mastery": pl0}
+
+    db.execute(
+        text("UPDATE learners SET bkt_profile = CAST(:profile AS jsonb) WHERE id = :id"),
+        {"profile": json.dumps(skills), "id": learner_id}
+    )
+    db.commit()
+    return {"success": True}
+
+
 def end_session(db: Session, learner_id: str) -> dict:
     """
     Closes the current open session and returns a full summary.

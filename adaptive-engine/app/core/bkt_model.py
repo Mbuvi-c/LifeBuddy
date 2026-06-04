@@ -34,7 +34,7 @@ SKILLS = {
     # community_safety       — mixed familiarity. low-moderate prior
     # workplace_readiness    — very low prior for most learners. slow learning
 
-    "money_transactions":     {"L": 0.15, "T": 0.02, "S": 0.10, "G": 0.10},
+    "money_transactions":     {"L": 0.15, "T": 0.09, "S": 0.10, "G": 0.25},
     "time_planning":          {"L": 0.10, "T": 0.12, "S": 0.12, "G": 0.18},
     "digital_safety":         {"L": 0.12, "T": 0.15, "S": 0.10, "G": 0.20},
     "mobile_money":           {"L": 0.05, "T": 0.10, "S": 0.08, "G": 0.15},
@@ -111,16 +111,16 @@ SKILL_CONSENT = {
 
 # Minimum attempts before BKT estimates are trusted.
 # Below this threshold the rule engine fallback is used.
-COLD_START_THRESHOLD = 3
+COLD_START_THRESHOLD = 0
 
 # Mastery thresholds that define difficulty tier boundaries.
 MASTERY_EASY_MAX   = 0.40   # below this  → tier 1 (easy)
 MASTERY_MEDIUM_MAX = 0.70   # below this  → tier 2 (medium), otherwise tier 3
 
 # Frustration thresholds — higher frustration overrides mastery-based choices.
-FRUSTRATION_CAUTION   = 0.30   # hold difficulty, increase hints
-FRUSTRATION_HIGH      = 0.60   # force tier 1 regardless of mastery
-FRUSTRATION_CRITICAL  = 0.80   # end session, notify caregiver
+FRUSTRATION_CAUTION   = 0.40   # hold difficulty, increase hints
+FRUSTRATION_HIGH      = 0.65   # force tier 1 regardless of mastery
+FRUSTRATION_CRITICAL  = 0.85   # end session, notify caregiver
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ def get_evidence_weight(response_type: str) -> float:
 # Core BKT update
 # ---------------------------------------------------------------------------
 
-def bkt_update(L: float, T: float, S: float, G: float, response_type: str) -> float:
+def bkt_update(L: float, T: float, S: float, G: float, response_type: str, response_time: int = 0) -> float:
     """
     Update mastery estimate after one learner attempt.
 
@@ -190,6 +190,13 @@ def bkt_update(L: float, T: float, S: float, G: float, response_type: str) -> fl
     # Blend posteriors proportionally to evidence weight
     posterior = w * posterior_correct + (1 - w) * posterior_incorrect
 
+    # Modify learning rate based on response time (correct answers only)
+    if response_type == "correct" and response_time > 0:
+        if response_time < 5000:
+            T = T * 1.2   # fast correct — confident, boost learning
+        elif response_time >= 8000:
+            T = T * 0.8   # slow correct — uncertain, reduce learning gain
+
     # Apply learning transition — probability learner just acquired the skill
     L_new = posterior + (1 - posterior) * T
 
@@ -220,11 +227,11 @@ def update_frustration_index(
     delta = 0.0
 
     if response_type == "incorrect":
-        delta += 0.15
+        delta += 0.07
     elif response_type == "hint":
         delta += 0.08
     elif response_type == "correct":
-        delta -= 0.10
+        delta -= 0.05
 
     if hints_used > 2:
         delta += 0.10
@@ -232,19 +239,14 @@ def update_frustration_index(
     if quit_signal:
         delta += 0.25
 
-# Response time signal — applied independently of response type
+# Response time signal — slow penalties only apply to incorrect/hint responses
     if response_time_ms > 0:
-        if response_time_ms > 60000:
-            delta += 0.10   # very slow — struggling, increase frustration
-        elif response_time_ms > 30000:
-            delta += 0.05   # slow — slight concern, increase frustration
+        if response_time_ms > 60000 and response_type != "correct":
+            delta += 0.10   # very slow wrong answer — struggling
+        elif response_time_ms > 30000 and response_type != "correct":
+            delta += 0.05   # slow wrong answer — slight concern
         elif response_time_ms <= 10000:
-            delta -= 0.03   # fast — confident, reduce frustration slightly
-
-    # For slow correct answers, cancel out the correct response reduction
-    # so the net effect is positive (frustration increases)
-    if response_type == "correct" and response_time_ms > 30000:
-        delta += 0.10   # cancel the -0.10 from correct response
+            delta -= 0.03   # fast response — confident, reduce frustration slightly
 
     return round(min(max(current_index + delta, 0.0), 1.0), 4)
 
@@ -561,23 +563,14 @@ def process_adaptation(
         "consecutive_correct": 0,
     })
 
-    attempts    = skill_data.get("attempts", 0)
     frustration = learner_profile.get("frustration_index", 0.0)
 
-    # --- Update frustration regardless of BKT vs rule engine ---
+    # --- Update frustration ---
     new_frustration = update_frustration_index(
         frustration, response_type, hints_used, quit_signal,
         response_time_ms=learner_profile.get("response_time_ms", 0)
     )
     frustration_status = get_frustration_status(new_frustration)
-
-    # --- Cold start — delegate to rule engine ---
-    if attempts < COLD_START_THRESHOLD:
-        result = rule_engine_fallback(learner_profile, skill, response_type)
-        result["frustration_index"]  = new_frustration
-        result["frustration_status"] = frustration_status
-        result["next_skill"]         = get_next_skill(learner_profile)
-        return result
 
     # --- BKT update ---
     params      = SKILLS[skill]
@@ -589,6 +582,7 @@ def process_adaptation(
         S=params["S"],
         G=params["G"],
         response_type=response_type,
+        response_time=learner_profile.get("response_time_ms", 0),
     )
 
     tier       = get_difficulty_tier(new_mastery, new_frustration)

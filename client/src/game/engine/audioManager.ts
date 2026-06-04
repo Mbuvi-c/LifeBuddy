@@ -80,6 +80,9 @@ export function playOptionAudio(taskId: string, skillId: string, optionId: strin
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function playVerdictAudio(correct: boolean, onEnd?: () => void): void {
+  let called = false
+  const done = () => { if (!called) { called = true; onEnd?.() } }
+
   const index = Math.floor(Math.random() * 3) + 1
   const type = correct ? 'correct' : 'wrong'
   const path = `${BASE}/shared/${type}_${index}.mp3`
@@ -89,19 +92,19 @@ export function playVerdictAudio(correct: boolean, onEnd?: () => void): void {
 
   audio.addEventListener('ended', () => {
     current = null
-    onEnd?.()
+    done()
   })
 
   audio.addEventListener('error', () => {
     // No audio file yet — call onEnd immediately so the app continues
     current = null
-    onEnd?.()
+    done()
   })
 
   current = audio
   audio.play().catch(() => {
     current = null
-    onEnd?.()
+    done()
   })
 }
 

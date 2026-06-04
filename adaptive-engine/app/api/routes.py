@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from app.core.adaptation import process_adaptation, reset_frustration_for_new_session
+from app.core.adaptation import process_adaptation, reset_frustration_for_new_session, store_onboarding_baseline
 from pydantic import BaseModel
 from typing import Optional
 
@@ -40,6 +40,19 @@ def log_session(request: SessionLogRequest, db: Session = Depends(get_db)):
         "message": "Session logged and adaptation processed",
         "adaptation": adaptation
     }
+
+class OnboardingBaselineRequest(BaseModel):
+    learner_id:         str
+    skill_baselines:    dict
+    consent_type:       str
+    recommended_skill:  str
+    hci_defaults:       dict
+
+@router.post("/onboarding/baseline")
+async def onboarding_baseline(request: OnboardingBaselineRequest, db: Session = Depends(get_db)):
+    result = await store_onboarding_baseline(request.learner_id, request.skill_baselines, db)
+    return {"success": result.get("success", False), "learner_id": request.learner_id}
+
 
 @router.post("/session/start/{learner_id}")
 def start_session(learner_id: str, db: Session = Depends(get_db)):

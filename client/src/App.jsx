@@ -1708,7 +1708,8 @@ function AuthLayout({ title, subtitle, children, footerText, footerLabel, onFoot
 // Screen 1: Role picker  →  Screen 2: Caregiver form (4 steps)
 // ─────────────────────────────────────────────
 function Signup({ nav, setUser }) {
-  const [role,    setRole]    = useState(null);       // null | "caregiver" | "learner"
+  const [role,         setRole]         = useState(null);      // null | "caregiver" | "learner"
+  const [welcomeStep,  setWelcomeStep]  = useState("welcome"); // "welcome" | "who"
   const [step,    setStep]    = useState(1);           // 1-4 caregiver steps
   const [form,    setForm]    = useState({
     learnerName:"", dob:"", diagnosis:"",
@@ -1735,46 +1736,57 @@ function Signup({ nav, setUser }) {
   const READ_LEVELS  = ["Pre-reader","Emerging reader","Independent reader","Supported reader"];
   const INDEP_LEVELS = ["Needs full support","Needs prompting","Mostly independent","Fully independent"];
 
-  const progressPct = ((step-1)/4)*100;
+  const progressPct = ((step-1)/3)*100;
 
-  // ── SCREEN 1: Role picker ──
+  // ── SCREEN 1: Welcome ──
+  if (!role && welcomeStep === "welcome") return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
+      padding:24,background:"var(--bg)",position:"relative",overflow:"hidden"}}>
+      <div className="glow-orb" style={{width:500,height:500,background:"rgba(108,99,255,0.08)",top:"-80px",left:"50%",transform:"translateX(-50%)"}}/>
+      <div className="page-enter" style={{width:"100%",maxWidth:480,position:"relative",zIndex:1,textAlign:"center"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:32}}>
+          <AppIcon size={40}/>
+          <span style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:"var(--text)"}}>Life<span style={{color:"var(--accent2)"}}>Buddy</span></span>
+        </div>
+        <h1 style={{fontFamily:"var(--font-display)",fontSize:"clamp(26px,5vw,38px)",fontWeight:800,marginBottom:10,color:"var(--text)",letterSpacing:"-0.02em"}}>Welcome to LifeBuddy</h1>
+        <p style={{color:"var(--text3)",fontSize:15,marginBottom:36,lineHeight:1.6}}>Personalised life skills learning</p>
+        <button className="btn btn-primary btn-lg" style={{width:"100%",marginBottom:16}} onClick={() => setWelcomeStep("who")}>
+          Get Started →
+        </button>
+        <p style={{color:"var(--text3)",fontSize:13}}>
+          Already have an account?{" "}
+          <span style={{color:"var(--accent2)",cursor:"pointer",fontWeight:500}} onClick={() => nav("login")}>Log in</span>
+        </p>
+      </div>
+    </div>
+  );
+
+  // ── SCREEN 2: Who is this for ──
   if (!role) return (
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
       padding:24,background:"var(--bg)",position:"relative",overflow:"hidden"}}>
       <div className="glow-orb" style={{width:500,height:500,background:"rgba(108,99,255,0.08)",top:"-80px",left:"50%",transform:"translateX(-50%)"}}/>
       <div className="page-enter" style={{width:"100%",maxWidth:520,position:"relative",zIndex:1,textAlign:"center"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:28}}>
-          <AppIcon size={40}/>
-          <span style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:800,color:"var(--text)"}}>Life<span style={{color:"var(--accent2)"}}>Buddy</span></span>
-        </div>
-        <h1 style={{fontFamily:"var(--font-display)",fontSize:"clamp(24px,5vw,36px)",fontWeight:800,marginBottom:10,color:"var(--text)",letterSpacing:"-0.02em"}}>Welcome! Who are you?</h1>
-        <p style={{color:"var(--text3)",fontSize:14,marginBottom:36,lineHeight:1.6}}>Tell us how you'll be using LifeBuddy so we can set things up the right way.</p>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:28}}>
-          {/* Caregiver */}
+        <h1 style={{fontFamily:"var(--font-display)",fontSize:"clamp(22px,4vw,32px)",fontWeight:800,marginBottom:10,color:"var(--text)",letterSpacing:"-0.02em"}}>Let's get started</h1>
+        <p style={{color:"var(--text3)",fontSize:14,marginBottom:32,lineHeight:1.6}}>LifeBuddy works best when set up together with the learner present.</p>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
           <button onClick={() => setRole("caregiver")} style={{
             background:"var(--surface)",border:"2px solid var(--border2)",borderRadius:"var(--radius-lg)",
-            padding:"32px 20px",cursor:"pointer",textAlign:"center",transition:"all 0.2s",fontFamily:"var(--font-body)",
+            padding:"32px 40px",cursor:"pointer",textAlign:"center",transition:"all 0.2s",fontFamily:"var(--font-body)",
+            maxWidth:280,width:"100%",
           }}
             onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--accent)";e.currentTarget.style.transform="translateY(-3px)";}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border2)";e.currentTarget.style.transform="translateY(0)";}}>
             <div style={{fontSize:52,marginBottom:14}}>👩‍⚕️</div>
-            <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:700,color:"var(--text)",marginBottom:6}}>I am a Caregiver</div>
-            <div style={{fontSize:12,color:"var(--text3)",lineHeight:1.5}}>Parent, teacher, therapist or support worker setting up a learner profile</div>
-          </button>
-          {/* Learner */}
-          <button onClick={() => { setRole("learner"); setUser({learnerName:"Learner",caregiverName:"",condition:"",age:"",email:"",joinDate:new Date().toLocaleDateString("en-GB",{month:"short",year:"numeric"}),bio:"",goals:["finance","time","routine","sorting"]}); nav("assessment"); }} style={{
-            background:"var(--surface)",border:"2px solid var(--border2)",borderRadius:"var(--radius-lg)",
-            padding:"32px 20px",cursor:"pointer",textAlign:"center",transition:"all 0.2s",fontFamily:"var(--font-body)",
-          }}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--green)";e.currentTarget.style.transform="translateY(-3px)";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border2)";e.currentTarget.style.transform="translateY(0)";}}>
-            <div style={{fontSize:52,marginBottom:14}}>🧑‍🎓</div>
-            <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:700,color:"var(--text)",marginBottom:6}}>I am a Learner</div>
-            <div style={{fontSize:12,color:"var(--text3)",lineHeight:1.5}}>Jump straight in and start the baseline activities</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:700,color:"var(--text)",marginBottom:6}}>Set up a learner profile</div>
+            <div style={{fontSize:12,color:"var(--text3)",lineHeight:1.5}}>Takes about 20 minutes — have the learner with you</div>
           </button>
         </div>
-        <p style={{color:"var(--text3)",fontSize:13}}>Already have an account?{" "}
-          <span style={{color:"var(--accent2)",cursor:"pointer",fontWeight:500}} onClick={() => nav("login")}>Log in</span>
+        <p style={{fontSize:12,color:"var(--text3)",lineHeight:1.6,maxWidth:360,margin:"0 auto 20px",textAlign:"center"}}>
+          We recommend having a caregiver, teacher, or support worker present during setup to get the best results for the learner.
+        </p>
+        <p style={{color:"var(--text3)",fontSize:13}}>
+          <span style={{color:"var(--accent2)",cursor:"pointer",fontWeight:500}} onClick={() => setWelcomeStep("welcome")}>← Back</span>
         </p>
       </div>
     </div>
@@ -1784,12 +1796,11 @@ function Signup({ nav, setUser }) {
   const canNext = [
     form.learnerName.trim().length > 0,                          // step 1
     form.independenceLevel && form.communicationStyle && form.readingLevel, // step 2
-    form.goals.length > 0,                                        // step 3
-    form.caregiverName.trim().length > 0,                         // step 4
+    form.caregiverName.trim().length > 0,                         // step 3
   ];
 
   const handleFinish = () => {
-    const goals = form.goals.length > 0 ? form.goals : ["finance","time","routine","sorting"];
+    const goals = ALL_GOALS.map(g => g.key);
     setUser({
       learnerName: form.learnerName || "Learner",
       caregiverName: form.caregiverName || "Caregiver",
@@ -1819,7 +1830,7 @@ function Signup({ nav, setUser }) {
             <AppIcon size={32}/><span style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:800,color:"var(--text)"}}>Life<span style={{color:"var(--accent2)"}}>Buddy</span></span>
           </div>
           <div style={{fontSize:12,color:"var(--text3)",marginBottom:10,letterSpacing:"0.06em",textTransform:"uppercase",fontWeight:600}}>
-            Step {step} of 4 — {["Learner Details","Learning Profile","Skill Goals","Caregiver & Consent"][step-1]}
+            Step {step} of 3 — {["Learner Details","Learning Profile","Caregiver & Consent"][step-1]}
           </div>
           {/* Progress bar */}
           <div style={{height:5,background:"var(--bg4)",borderRadius:3,overflow:"hidden",maxWidth:360,margin:"0 auto 4px"}}>
@@ -1902,39 +1913,8 @@ function Signup({ nav, setUser }) {
             </div>
           )}
 
-          {/* ── STEP 3: Skill Goals ── */}
+          {/* ── STEP 3: Caregiver & Consent ── */}
           {step === 3 && (
-            <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
-                <span style={{fontSize:24}}>🎯</span>
-                <h2 style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:"var(--text)"}}>Skill Goals</h2>
-              </div>
-              <p style={{fontSize:13,color:"var(--text3)",lineHeight:1.6}}>Select the life skills you'd like {form.learnerName||"the learner"} to focus on. You can change these later.</p>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                {ALL_GOALS.map(g=>{
-                  const sel = form.goals.includes(g.key);
-                  return (
-                    <button key={g.key} onClick={()=>toggleGoal(g.key)} style={{
-                      display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-                      borderRadius:"var(--radius-sm)",border:`1.5px solid ${sel?"var(--accent)":"var(--border2)"}`,
-                      background:sel?"rgba(108,99,255,0.10)":"var(--bg3)",
-                      cursor:"pointer",fontFamily:"var(--font-body)",textAlign:"left",transition:"all 0.15s",
-                    }}>
-                      <span style={{fontSize:22}}>{g.icon}</span>
-                      <span style={{fontSize:13,fontWeight:sel?600:400,color:sel?"var(--accent2)":"var(--text)"}}>{g.label}</span>
-                      {sel && <span style={{marginLeft:"auto",color:"var(--green)",fontSize:14}}>✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-              {form.goals.length > 0 && (
-                <p style={{fontSize:12,color:"var(--accent2)",fontWeight:600}}>{form.goals.length} skill{form.goals.length>1?"s":""} selected</p>
-              )}
-            </div>
-          )}
-
-          {/* ── STEP 4: Caregiver & Consent ── */}
-          {step === 4 && (
             <div style={{display:"flex",flexDirection:"column",gap:18}}>
               <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
                 <span style={{fontSize:24}}>🔐</span>
@@ -1948,23 +1928,6 @@ function Signup({ nav, setUser }) {
                 <label className="input-label">Email <span style={{color:"var(--text3)",fontWeight:400,textTransform:"none",fontSize:11}}>(optional)</span></label>
                 <input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e=>set("email",e.target.value)}/>
               </div>
-              <div className="input-wrap">
-                <label className="input-label">Consent Settings</label>
-                <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
-                  {[
-                    {v:"pre-approved", label:"Pre-approved", desc:"All selected skills are approved — the learner can access them freely"},
-                    {v:"per-skill",    label:"Approve per skill", desc:"I will review and approve each skill before the learner accesses it"},
-                  ].map(opt=>(
-                    <label key={opt.v} style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",padding:"12px 14px",borderRadius:"var(--radius-sm)",border:`1.5px solid ${form.consent===opt.v?"var(--accent)":"var(--border2)"}`,background:form.consent===opt.v?"rgba(108,99,255,0.08)":"transparent",transition:"all 0.15s"}}>
-                      <input type="radio" name="consent" value={opt.v} checked={form.consent===opt.v} onChange={()=>set("consent",opt.v)} style={{accentColor:"var(--accent)",marginTop:2}}/>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:2}}>{opt.label}</div>
-                        <div style={{fontSize:12,color:"var(--text3)",lineHeight:1.5}}>{opt.desc}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
               <div style={{background:"rgba(34,201,122,0.08)",border:"1px solid rgba(34,201,122,0.25)",borderRadius:"var(--radius-sm)",padding:"10px 14px",fontSize:12,color:"var(--green)",lineHeight:1.5}}>
                 🔒 No data is shared with third parties. Everything stays on this device.
               </div>
@@ -1976,13 +1939,13 @@ function Signup({ nav, setUser }) {
             <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={() => step===1 ? setRole(null) : setStep(s=>s-1)}>
               {step===1?"← Role":"← Back"}
             </button>
-            {step < 4 ? (
+            {step < 3 ? (
               <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={() => setStep(s=>s+1)} disabled={!canNext[step-1]}>
                 Continue →
               </button>
             ) : (
-              <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={handleFinish} disabled={!canNext[3]}>
-                Start Baseline Test →
+              <button className="btn btn-primary btn-sm" style={{flex:2}} onClick={handleFinish} disabled={!canNext[2]}>
+                Start Assessment →
               </button>
             )}
           </div>
@@ -2123,386 +2086,425 @@ function Login({ nav, setUser }) {
 
 // ─────────────────────────────────────────────
 // ASSESSMENT — Learner Baseline
-// Phase A: 4 interactive baseline tasks (new)
-// Phase B: 2 questions per skill (existing)
-// Phase C: Completion screen
+// phase: "skills" | "processing" | "recommendation" | "consent"
 // ─────────────────────────────────────────────
+
+const ASSESSMENT_SKILLS_LIST = [
+  { id:"money_transactions",     name:"Money & Transactions",           icon:"💰" },
+  { id:"time_planning",          name:"Time & Planning",                icon:"⏰" },
+  { id:"digital_safety",         name:"Digital Safety & Communication", icon:"📱" },
+  { id:"mobile_money",           name:"Mobile Money & M-Pesa",          icon:"📲" },
+  { id:"communication_advocacy", name:"Communication & Self-Advocacy",  icon:"🤝" },
+  { id:"financial_planning",     name:"Financial Planning",             icon:"📊" },
+  { id:"community_safety",       name:"Community & Personal Safety",    icon:"🛡️" },
+  { id:"workplace_readiness",    name:"Workplace Readiness",            icon:"💼" },
+]
+
+const ASSESSMENT_CG_QUESTIONS = {
+  money_transactions:     ["Can they identify coins and notes?","Have they paid for something independently?","Do they understand change?"],
+  time_planning:          ["Can they read a clock?","Do they follow a daily schedule?","Do they understand morning/afternoon/evening?"],
+  digital_safety:         ["Do they use a phone independently?","Do they know not to share passwords?","Can they identify suspicious messages?"],
+  mobile_money:           ["Have they seen M-Pesa used?","Do they know what a PIN is?","Can they identify an M-Pesa scam?"],
+  communication_advocacy: ["Can they express their needs?","Do they ask for help when needed?","Do they know their basic rights?"],
+  financial_planning:     ["Do they understand saving?","Can they make simple budget choices?","Do they understand income vs expenses?"],
+  community_safety:       ["Do they know emergency contacts?","Can they navigate to a clinic independently?","Do they know community services available?"],
+  workplace_readiness:    ["Have they had any work experience?","Can they follow multi-step instructions?","Do they understand a payslip?"],
+}
+
+const ASSESSMENT_SELF_QUESTIONS = {
+  money_transactions:     ["Can you identify coins and notes?","Have you paid for something independently?","Do you understand change?"],
+  time_planning:          ["Can you read a clock?","Do you follow a daily schedule?","Do you understand morning/afternoon/evening?"],
+  digital_safety:         ["Do you use a phone independently?","Do you know not to share passwords?","Can you identify suspicious messages?"],
+  mobile_money:           ["Have you seen M-Pesa used?","Do you know what a PIN is?","Can you identify an M-Pesa scam?"],
+  communication_advocacy: ["Can you express your needs?","Do you ask for help when needed?","Do you know your basic rights?"],
+  financial_planning:     ["Do you understand saving?","Can you make simple budget choices?","Do you understand income vs expenses?"],
+  community_safety:       ["Do you know emergency contacts?","Can you navigate to a clinic independently?","Do you know community services available?"],
+  workplace_readiness:    ["Have you had any work experience?","Can you follow multi-step instructions?","Do you understand a payslip?"],
+}
+
+const ASSESSMENT_TASKS = {
+  money_transactions: [
+    { q:"Which coin is worth KES 20?", opts:["KES 5 — small silver coin","KES 20 — large gold coin","KES 1 — very small coin"], correct:1 },
+    { q:"Which note is worth KES 200?", opts:["KES 50 note — red","KES 200 note — green","KES 500 note — purple"], correct:1 },
+    { q:"You pay KES 100 for something that costs KES 60. How much change do you get?", opts:["KES 40","KES 60","KES 160"], correct:0 },
+  ],
+  time_planning: [
+    { q:"What time does the clock show when the short hand points to 3?", opts:["3:00","4:00","2:00"], correct:0 },
+    { q:"Which activity happens in the morning?", opts:["Eating breakfast","Watching the sunset","Going to sleep"], correct:0 },
+    { q:"Put these in order — which comes first?", opts:["Wake up","Brush teeth","Eat breakfast"], correct:0 },
+  ],
+  digital_safety: [
+    { q:"You get a message: 'You won KES 50,000! Click here!' What do you do?", opts:["Click immediately","Tell a trusted adult — looks like a scam","Share with friends"], correct:1 },
+    { q:"Which is a safe password?", opts:["123456","Your name","Xk9#mP2!"], correct:2 },
+    { q:"Someone online asks for your home address. What do you do?", opts:["Give it to them","Tell a trusted adult","Post it publicly"], correct:1 },
+  ],
+  mobile_money: [
+    { q:"What does M-Pesa use to confirm transactions?", opts:["Your name","A PIN number","Your photo"], correct:1 },
+    { q:"You get an M-Pesa message asking for your PIN. What do you do?", opts:["Send your PIN","Ignore and tell someone","Reply with your ID"], correct:1 },
+    { q:"Lipa na M-Pesa is used for?", opts:["Sending messages","Making payments at shops","Calling friends"], correct:1 },
+  ],
+  communication_advocacy: [
+    { q:"You need help but don't know who to ask. What do you do?", opts:["Stay quiet","Ask someone you trust","Give up"], correct:1 },
+    { q:"Which is the best way to express you are not feeling well?", opts:["Stay silent","Tell a trusted person how you feel","Pretend everything is fine"], correct:1 },
+    { q:"You disagree with a decision made for you. What do you do?", opts:["Accept it without question","Calmly express your feelings","Get angry immediately"], correct:1 },
+  ],
+  financial_planning: [
+    { q:"You earn KES 1000 and spend KES 800. How much is left to save?", opts:["KES 200","KES 800","KES 1800"], correct:0 },
+    { q:"Which is an example of saving?", opts:["Buying something immediately","Putting money aside for later","Spending all your money"], correct:1 },
+    { q:"What is a budget?", opts:["A type of food","A plan for spending and saving money","A bank account"], correct:1 },
+  ],
+  community_safety: [
+    { q:"What number do you call in an emergency in Kenya?", opts:["999","911","112"], correct:0 },
+    { q:"Where do you go when you are sick?", opts:["Supermarket","Health clinic or hospital","Police station"], correct:1 },
+    { q:"Which organisation helps people in your community?", opts:["A cinema","A community health centre","A shopping mall"], correct:1 },
+  ],
+  workplace_readiness: [
+    { q:"Your work schedule says you start at 8am. What time should you arrive?", opts:["9am — a bit late is fine","8am — on time","7am — very early always"], correct:1 },
+    { q:"Your supervisor gives you 3 instructions. What do you do?", opts:["Do only the first one","Listen carefully and do all three","Ask them to repeat forever"], correct:1 },
+    { q:"What does a payslip show?", opts:["Your shopping list","How much you earned and any deductions","Your work schedule"], correct:1 },
+  ],
+}
+
+const ASSESSMENT_CONSENT_OPTIONS = [
+  { val:"pre_approved",      label:"Pre-approved",      desc:"All selected skills are unlocked now" },
+  { val:"approve_per_skill", label:"Approve per skill", desc:"Caregiver approves each new skill" },
+  { val:"approve_per_tier",  label:"Approve per tier",  desc:"Caregiver approves each tier advance" },
+]
+
 function Assessment({ nav, settings, user, setTierData }) {
-  const [phase, setPhase]       = useState("baseline"); // "baseline" | "skills" | "done"
-  const [baseIdx, setBaseIdx]   = useState(0);
-  const [baseAns, setBaseAns]   = useState({});         // task index → answered
-  const [baseFb,  setBaseFb]    = useState(null);       // "correct"|"wrong"|null
-  const [coinSel, setCoinSel]   = useState(null);       // for task 0 (coin pick)
-  const [si, setSi]             = useState(0);
-  const [ti, setTi]             = useState(0);
-  const [fb, setFb]             = useState(null);
-  const learnerName             = user?.learnerName || "the learner";
+  const [phase,           setPhase]           = useState("skills")
+  const [skillIndex,      setSkillIndex]      = useState(0)
+  const [questionIndex,   setQuestionIndex]   = useState(0)
+  const [taskIndex,       setTaskIndex]       = useState(0)
+  const [subPhase,        setSubPhase]        = useState("caregiver")
+  const [caregiverScores, setCaregiverScores] = useState({})
+  const [learnerScores,   setLearnerScores]   = useState({})
+  const [taskFeedback,    setTaskFeedback]    = useState(null)
+  const [pl0Results,      setPl0Results]      = useState({})
+  const [recommendedSkill, setRecommendedSkill] = useState("")
+  const [consentType,     setConsentType]     = useState("pre_approved")
+  const [enabledSkills,   setEnabledSkills]   = useState(ASSESSMENT_SKILLS_LIST.map(s => s.id))
 
-  // ── PHASE A: 4 baseline tasks ──
-  const COINS = [
-    {label:"5¢",  icon:"⚪", value:5,   hint:"Five cent coin — small silver coin"},
-    {label:"10¢", icon:"⚪", value:10,  hint:"Ten cent coin — medium silver coin"},
-    {label:"25¢", icon:"🟡", value:25,  hint:"Quarter — larger silver coin"},
-    {label:"50¢", icon:"🟡", value:50,  hint:"Fifty cents — big silver coin"},
-    {label:"$1",  icon:"🟠", value:100, hint:"One dollar coin — gold coloured coin"},
-  ];
+  const taskStartTime      = useRef(Date.now())
+  const caregiverScoresRef = useRef({})
+  const learnerScoresRef   = useRef({})
 
-  const BASELINE_TASKS = [
-    {
-      id:"coin", type:"coin",
-      q:"Tap the coin worth 25 cents",
-      icon:"🪙",
-      hint:"Look for the coin labelled 25¢",
-      correct: 2, // index in COINS
-    },
-    {
-      id:"clock", type:"clock",
-      q:"What time does this clock show?",
-      icon:"🕒",
-      hour:3, min:0,
-      opts:["3:00","4:00","2:00","12:00"],
-      c:0,
-      hint:"The short hand points to the hour number",
-    },
-    {
-      id:"digital", type:"choice",
-      q:"You get this message: 'You won KES 50,000! Click here to claim your prize!' What do you do?",
-      icon:"📱",
-      opts:[
-        "Click the link immediately",
-        "Tell a trusted adult — it looks like a scam",
-        "Share it with all your contacts",
-        "Send your bank details to claim the prize",
-      ],
-      c:1,
-      hint:"If something sounds too good to be true, it usually is",
-    },
-    {
-      id:"change", type:"choice",
-      q:"You have KES 100. You buy something that costs KES 60. How much change do you get back?",
-      icon:"💰",
-      opts:["KES 20","KES 40","KES 60","KES 160"],
-      c:1,
-      hint:"Subtract the price from what you paid",
-    },
-  ];
+  const currentSkill = ASSESSMENT_SKILLS_LIST[skillIndex]
+  const skillId      = currentSkill?.id
+  const isCgMode     = !user?.selfDirected
+  const questions    = (user?.selfDirected ? ASSESSMENT_SELF_QUESTIONS : ASSESSMENT_CG_QUESTIONS)[skillId] || []
+  const tasks        = ASSESSMENT_TASKS[skillId] || []
 
-  const btask = BASELINE_TASKS[baseIdx];
+  useEffect(() => { taskStartTime.current = Date.now() }, [skillIndex, subPhase, taskIndex])
 
-  const answerBaseline = (i) => {
-    if (baseFb) return;
-    const ok = i === btask.c;
-    setBaseFb(ok ? "correct" : "wrong");
-    if (settings?.audioEnabled) speak(ok ? "Great choice!" : "Not quite — let's keep going.");
+  useEffect(() => {
+    if (subPhase !== "cg_to_learner") return
+    const t = setTimeout(() => setSubPhase("learner"), 5000)
+    return () => clearTimeout(t)
+  }, [subPhase])
+
+  useEffect(() => {
+    if (subPhase !== "skill_complete") return
+    const t = setTimeout(() => {
+      setSkillIndex(si => si + 1)
+      setTaskIndex(0)
+      setSubPhase("caregiver")
+    }, 7000)
+    return () => clearTimeout(t)
+  }, [subPhase])
+
+  useEffect(() => {
+    if (phase !== "processing") return
+    const results = {}
+    ASSESSMENT_SKILLS_LIST.forEach(s => {
+      const cs  = caregiverScoresRef.current[s.id] || 0
+      const ls  = learnerScoresRef.current[s.id]  || 0
+      const raw = 0.15 + cs * 0.30 + ls * 0.70
+      results[s.id] = Math.max(0.15, Math.min(0.45, raw))
+    })
+    setPl0Results(results)
+    const t = setTimeout(() => {
+      const best = Object.entries(results).reduce((a, b) => a[1] < b[1] ? a : b)
+      setRecommendedSkill(best[0])
+      setPhase("recommendation")
+    }, 2500)
+    return () => clearTimeout(t)
+  }, [phase])
+
+  function handleCaregiverAnswer(score) {
+    const updated = { ...caregiverScoresRef.current, [skillId]: (caregiverScoresRef.current[skillId] || 0) + score }
+    caregiverScoresRef.current = updated
+    setCaregiverScores(updated)
+    if (questionIndex < 2) {
+      setQuestionIndex(qi => qi + 1)
+    } else {
+      setQuestionIndex(0)
+      setSubPhase("cg_to_learner")
+    }
+  }
+
+  function handleTaskAnswer(i) {
+    if (taskFeedback) return
+    const task    = tasks[taskIndex]
+    const correct = i === task.correct
+    const rt      = Date.now() - taskStartTime.current
+    const score   = correct ? (rt < 5000 ? 0.08 : 0.03) : 0.00
+    const updated = { ...learnerScoresRef.current, [skillId]: (learnerScoresRef.current[skillId] || 0) + score }
+    learnerScoresRef.current = updated
+    setLearnerScores(updated)
+    setTaskFeedback(correct ? "correct" : "wrong")
     setTimeout(() => {
-      setBaseFb(null); setCoinSel(null);
-      setBaseAns(a => ({...a, [baseIdx]: ok}));
-      if (baseIdx + 1 >= BASELINE_TASKS.length) setPhase("skills");
-      else setBaseIdx(baseIdx + 1);
-    }, 1300);
-  };
+      setTaskFeedback(null)
+      if (taskIndex < 2) {
+        setTaskIndex(ti => ti + 1)
+      } else if (skillIndex < 7) {
+        setSubPhase("skill_complete")
+      } else {
+        setPhase("processing")
+      }
+    }, 1200)
+  }
 
-  // ── PHASE B: existing 2-per-skill questions ──
-  const allTasks = {
-    time:[
-      {q:"Which clock shows 3 o'clock?",icon:"🕒",opts:["3:00","4:00","2:00"],c:0},
-      {q:"Morning or evening — which comes first?",icon:"🌅",opts:["Morning 🌅","Evening 🌇","Night 🌙"],c:0},
-    ],
-    sorting:[
-      {q:"Which belongs in the kitchen?",icon:"🍴",opts:["Fork 🍴","Hammer 🔨","Pencil ✏️"],c:0},
-      {q:"What goes in the recycling bin?",icon:"♻️",opts:["Banana 🍌","Plastic bottle ♻️","Sock 🧦"],c:1},
-    ],
-    routine:[
-      {q:"What do you do right after waking up?",icon:"🛏️",opts:["Brush teeth 🪥","Watch TV 📺","Cook dinner 🍳"],c:0},
-      {q:"When do you eat breakfast?",icon:"🍳",opts:["In the morning","At midnight","Before sleeping"],c:0},
-    ],
-    finance:[
-      {q:"You have $2. A snack costs $1. How much is left?",icon:"💰",opts:["$1","$3","$0"],c:0},
-      {q:"Which coin is worth 25 cents?",icon:"🪙",opts:["Quarter 🟡","Dime ⚪","Nickel ⚪"],c:0},
-    ],
-    hygiene:[
-      {q:"How often should you brush your teeth?",icon:"🪥",opts:["Twice a day","Once a week","Monthly"],c:0},
-      {q:"What do you use to wash your hands?",icon:"🧼",opts:["Soap & water 🧼","Sand 🪨","Just water 💧"],c:0},
-    ],
-  };
-  const skillKeys  = ["finance","time","routine","sorting"];
-  const skillNames = {finance:"Money & Transactions",time:"Time & Planning",routine:"Daily Routine",sorting:"Financial Planning"};
-  const skillIcons = {finance:"💰",time:"⏰",routine:"📋",sorting:"📊"};
-  const skill = skillKeys[si];
-  const tasks = allTasks[skill];
-  const task  = tasks[ti];
-  const totalSkill = skillKeys.reduce((a,k) => a+allTasks[k].length, 0);
-  const doneSkill  = skillKeys.slice(0,si).reduce((a,k) => a+allTasks[k].length, 0) + ti;
+  async function handleConfirmConsent() {
+    try {
+      await fetch("http://127.0.0.1:8000/adapt/onboarding/baseline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          learner_id:        "8312fa0c-9b5f-46d6-94df-40552fc6cc7c",
+          skill_baselines:   pl0Results,
+          consent_type:      consentType,
+          recommended_skill: recommendedSkill,
+          hci_defaults: {
+            independence_level:  user?.independence        || "needs_prompting",
+            communication_style: user?.communicationStyle  || "verbal",
+            reading_level:       user?.readingLevel         || "emerging",
+          },
+        }),
+      })
+    } catch (e) {
+      console.warn("Baseline POST failed", e)
+    }
+    setTierData({})
+    nav("home")
+  }
 
-  useEffect(() => { if(settings?.autoReadQuestions && settings?.audioEnabled && phase==="skills") speak(task.q); }, [si, ti, phase]);
-  useEffect(() => { if(settings?.autoReadQuestions && settings?.audioEnabled && phase==="baseline") speak(btask?.q||""); }, [baseIdx, phase]);
+  // ── Processing ──
+  if (phase === "processing") return (
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,padding:24}}>
+      <div style={{fontSize:48}}>⚙️</div>
+      <h2 style={{color:"var(--text)",fontFamily:"var(--font-display)",fontSize:24,fontWeight:800}}>Analysing results...</h2>
+      <p style={{color:"var(--text2)",fontSize:14}}>Setting up a personalised learning profile.</p>
+      <div style={{width:48,height:4,borderRadius:2,background:"var(--accent)",animation:"pulse 1s ease-in-out infinite"}}/>
+    </div>
+  )
 
-  const answerSkill = (i) => {
-    if (fb) return;
-    setFb(i === task.c ? "correct" : "wrong");
-    if (settings?.audioEnabled) speak(i===task.c ? "Correct!" : "Not quite.");
-    setTimeout(() => {
-      setFb(null);
-      const nt = ti + 1;
-      if (nt >= tasks.length) {
-        const ns = si + 1;
-        if (ns >= skillKeys.length) setPhase("done");
-        else { setSi(ns); setTi(0); }
-      } else setTi(nt);
-    }, 1200);
-  };
-
-  // ── RENDER ──
-  const glow = <div className="glow-orb" style={{width:500,height:500,background:"rgba(108,99,255,0.09)",top:"50%",left:"50%",transform:"translate(-50%,-50%)"}}/>;
-
-  // ── COMPLETION ──
-  if (phase === "done") {
-    const goals = user?.goals || skillKeys;
-    const baseScore = Object.values(baseAns).filter(Boolean).length;
+  // ── Recommendation ──
+  if (phase === "recommendation") {
+    const rec = ASSESSMENT_SKILLS_LIST.find(s => s.id === recommendedSkill)
     return (
-      <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflow:"hidden"}}>
-        {glow}
-        <div className="page-enter" style={{width:"100%",maxWidth:520,position:"relative",zIndex:1,textAlign:"center"}}>
-          <div style={{fontSize:80,marginBottom:8,animation:"bounceY 0.6s ease"}}>🎉</div>
-          <h1 style={{fontFamily:"var(--font-display)",fontSize:"clamp(24px,5vw,36px)",fontWeight:800,marginBottom:10,color:"var(--text)",letterSpacing:"-0.02em"}}>
-            All done, {learnerName}!
-          </h1>
-          <p style={{color:"var(--text2)",fontSize:15,lineHeight:1.7,marginBottom:28}}>
-            {learnerName} is ready to start learning. The adaptive engine has set a starting tier for each skill based on the baseline.
-          </p>
+      <div style={{minHeight:"100vh",background:"var(--bg)",overflowY:"auto",padding:24}}>
+        <div style={{maxWidth:480,margin:"0 auto",paddingTop:40,paddingBottom:40}}>
+          <h2 style={{color:"var(--text)",fontFamily:"var(--font-display)",fontSize:22,fontWeight:800,marginBottom:8}}>
+            Assessment complete 🎉
+          </h2>
+          <p style={{color:"var(--text2)",fontSize:14,marginBottom:24}}>Based on the baseline, we recommend starting with:</p>
+          <div className="card" style={{padding:24,marginBottom:16,border:"2px solid var(--accent)"}}>
+            <div style={{fontSize:40,marginBottom:8}}>{rec?.icon}</div>
+            <div style={{fontSize:18,fontWeight:700,color:"var(--text)",marginBottom:4}}>{rec?.name}</div>
+            <div style={{fontSize:13,color:"var(--text2)"}}>Baseline P(L₀) = {((pl0Results[recommendedSkill] || 0) * 100).toFixed(1)}%</div>
+          </div>
+          <button className="btn btn-primary" style={{width:"100%",marginBottom:20}} onClick={() => setPhase("consent")}>
+            Start with this skill →
+          </button>
+          <p style={{fontSize:13,color:"var(--text3)",marginBottom:12,textAlign:"center"}}>Or choose a different starting skill:</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {ASSESSMENT_SKILLS_LIST.filter(s => s.id !== recommendedSkill).map(s => (
+              <button key={s.id} className="btn btn-ghost"
+                style={{justifyContent:"flex-start",gap:12,textAlign:"left"}}
+                onClick={() => { setRecommendedSkill(s.id); setPhase("consent") }}>
+                <span style={{fontSize:20}}>{s.icon}</span>
+                <span style={{flex:1,fontSize:14}}>{s.name}</span>
+                <span style={{fontSize:11,color:"var(--text3)"}}>{((pl0Results[s.id] || 0) * 100).toFixed(1)}%</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-          {/* Baseline score */}
-          <div className="card" style={{padding:20,marginBottom:16,textAlign:"left"}}>
-            <div style={{fontSize:13,fontWeight:700,color:"var(--text2)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:14}}>📊 Baseline Results</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {BASELINE_TASKS.map((t,i) => (
-                <div key={t.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"var(--bg3)",borderRadius:"var(--radius-sm)",border:`1px solid ${baseAns[i]?"var(--green)":"var(--border2)"}`}}>
-                  <span style={{fontSize:18}}>{t.icon}</span>
-                  <span style={{fontSize:12,color:"var(--text2)",flex:1,lineHeight:1.3}}>{t.id==="coin"?"Coin Recognition":t.id==="clock"?"Time Reading":t.id==="digital"?"Digital Safety":"Money Maths"}</span>
-                  <span style={{fontSize:16}}>{baseAns[i]?"✅":"💡"}</span>
+  // ── Consent ──
+  if (phase === "consent") {
+    const consentOptions = user?.selfDirected
+      ? [
+          { val:"pre_approved",      label:"Show me everything",  desc:"Full progress reports after every session" },
+          { val:"approve_per_skill", label:"Just the highlights", desc:"Summary at end of each skill" },
+          { val:"approve_per_tier",  label:"Keep it simple",      desc:"Just tell me what to do next" },
+        ]
+      : ASSESSMENT_CONSENT_OPTIONS
+    return (
+      <div style={{minHeight:"100vh",background:"var(--bg)",overflowY:"auto",padding:24}}>
+        <div style={{maxWidth:480,margin:"0 auto",paddingTop:40,paddingBottom:40,display:"flex",flexDirection:"column",gap:20}}>
+          <div>
+            <h2 style={{color:"var(--text)",fontFamily:"var(--font-display)",fontSize:22,fontWeight:800,marginBottom:6}}>
+              {user?.selfDirected ? "Notification Preferences" : "Consent & Skill Access"}
+            </h2>
+            <p style={{color:"var(--text2)",fontSize:14}}>
+              {user?.selfDirected ? "How much detail would you like to see?" : "Choose how skill access is managed for this learner."}
+            </p>
+          </div>
+          <div className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:14}}>
+            {consentOptions.map(opt => (
+              <label key={opt.val} style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer"}}>
+                <input type="radio" name="consentType" value={opt.val}
+                  checked={consentType === opt.val} onChange={() => setConsentType(opt.val)} style={{marginTop:3}}/>
+                <div>
+                  <div style={{fontSize:14,fontWeight:600,color:"var(--text)"}}>{opt.label}</div>
+                  <div style={{fontSize:12,color:"var(--text2)"}}>{opt.desc}</div>
                 </div>
-              ))}
-            </div>
-            <div style={{fontSize:13,color:"var(--text3)",textAlign:"center"}}>
-              {baseScore} of 4 baseline tasks answered correctly
-            </div>
+              </label>
+            ))}
           </div>
-
-          {/* Assigned skills */}
-          <div className="card" style={{padding:20,marginBottom:24,textAlign:"left"}}>
-            <div style={{fontSize:13,fontWeight:700,color:"var(--text2)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:14}}>🎯 Skills Ready to Practise</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-              {(user?.goals || skillKeys).map(g => {
-                const s = SKILLS.find(x=>x.key===g) || {icon:"⭐",name:g};
-                return (
-                  <span key={g} style={{display:"flex",alignItems:"center",gap:6,background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:100,padding:"6px 14px",fontSize:13,color:"var(--text)"}}>
-                    {s.icon} {s.name}
-                  </span>
-                );
-              })}
+          {!user?.selfDirected && (
+            <div className="card" style={{padding:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:"var(--text2)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:14}}>Skills to enable</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {ASSESSMENT_SKILLS_LIST.map(s => (
+                  <label key={s.id} style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+                    <input type="checkbox" checked={enabledSkills.includes(s.id)}
+                      onChange={() => setEnabledSkills(prev =>
+                        prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id]
+                      )}/>
+                    <span style={{fontSize:18}}>{s.icon}</span>
+                    <span style={{fontSize:14,color:"var(--text)"}}>{s.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <button className="btn btn-primary btn-lg" style={{width:"100%"}} onClick={() => {
-            // Set starting tiers based on baseline score
-            // Score 4/4 → start intermediate, 0-1 → stay easy, 2-3 → easy
-            const tier = baseScore >= 4 ? 2 : 1;
-            const goals = user?.goals || ["finance","time","routine","sorting"];
-            const newTiers = {};
-            goals.forEach(g => { newTiers[g] = tier; });
-            // Refine per-task: if they got coin/change right, bump finance
-            if (baseAns[0] && baseAns[3]) newTiers.finance = Math.min(3, tier + 1);
-            if (baseAns[1]) newTiers.time = Math.min(3, tier + 1);
-            setTierData(prev => ({...prev, ...newTiers}));
-            nav("home");
-          }}>
-            Start Learning →
+          )}
+          <button className="btn btn-primary btn-lg" style={{width:"100%"}} onClick={handleConfirmConsent}>
+            {user?.selfDirected ? "Start Learning →" : "Confirm & Start Learning →"}
           </button>
         </div>
       </div>
-    );
+    )
   }
 
-  // ── PHASE A: BASELINE TASKS ──
-  if (phase === "baseline") {
-    const hourDeg = btask.type==="clock" ? ((btask.hour%12)/12)*360 : 0;
-    const minDeg  = btask.type==="clock" ? (btask.min/60)*360       : 0;
+  // ── Transition: caregiver → learner ──
+  if (subPhase === "cg_to_learner") return (
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,gap:20,textAlign:"center"}}>
+      <div style={{fontSize:72}}>{currentSkill?.icon}</div>
+      <div style={{fontSize:20,fontWeight:700,color:"var(--text)",fontFamily:"var(--font-display)"}}>{currentSkill?.name}</div>
+      <p style={{fontSize:15,color:"var(--text2)",maxWidth:360,lineHeight:1.6}}>
+        Great! Now let's see what {user?.learnerName || "the learner"} can do 🎯
+      </p>
+      <div style={{width:"100%",maxWidth:360,height:4,background:"var(--border2)",borderRadius:2,overflow:"hidden"}}>
+        <div key={`cgtl-${skillIndex}`} style={{height:"100%",background:"var(--accent)",borderRadius:2,animation:"assessFill 5s linear forwards"}}/>
+      </div>
+      <style>{`@keyframes assessFill { from { width:0 } to { width:100% } }`}</style>
+    </div>
+  )
 
+  // ── Transition: skill complete ──
+  if (subPhase === "skill_complete") {
+    const nextSkill = ASSESSMENT_SKILLS_LIST[skillIndex + 1]
     return (
-      <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflow:"hidden"}}>
-        {glow}
-        <div className="page-enter" style={{width:"100%",maxWidth:520,position:"relative",zIndex:1}}>
-          {/* Header */}
-          <div style={{textAlign:"center",marginBottom:24}}>
-            <p style={{fontSize:11,fontWeight:600,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>
-              Baseline Activity {baseIdx+1} of {BASELINE_TASKS.length}
-            </p>
-            <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:10}}>
-              {BASELINE_TASKS.map((_,i)=>(
-                <div key={i} style={{width:40,height:5,borderRadius:3,transition:"all 0.3s",
-                  background:i<baseIdx?"var(--green)":i===baseIdx?"var(--accent)":"var(--bg4)"}}/>
-              ))}
+      <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,gap:16,textAlign:"center"}}>
+        <div style={{fontSize:64}}>✅</div>
+        <div style={{fontSize:20,fontWeight:700,color:"var(--text)",fontFamily:"var(--font-display)"}}>{currentSkill?.name} complete!</div>
+        {nextSkill && (
+          <p style={{fontSize:15,color:"var(--text2)"}}>Moving to {nextSkill.icon} {nextSkill.name}...</p>
+        )}
+        <div style={{fontSize:13,color:"var(--text3)"}}>Skill {skillIndex + 1} of 8</div>
+        <div style={{width:"100%",maxWidth:360,height:4,background:"var(--border2)",borderRadius:2,overflow:"hidden"}}>
+          <div key={`sc-${skillIndex}`} style={{height:"100%",background:"var(--green)",borderRadius:2,animation:"assessFill7 7s linear forwards"}}/>
+        </div>
+        <style>{`@keyframes assessFill7 { from { width:0 } to { width:100% } }`}</style>
+      </div>
+    )
+  }
+
+  // ── Skills (main assessment) ──
+  const totalSteps  = 48
+  const doneSteps   = skillIndex * 6 + (subPhase === "caregiver" ? questionIndex : 3 + taskIndex)
+  const progressPct = Math.round((doneSteps / totalSteps) * 100)
+
+  return (
+    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{width:"100%",maxWidth:480}}>
+        <div style={{marginBottom:24}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <span style={{fontSize:12,color:"var(--text3)"}}>{currentSkill?.icon} {currentSkill?.name}</span>
+            <span style={{fontSize:12,color:"var(--text3)"}}>Skill {skillIndex + 1} / {ASSESSMENT_SKILLS_LIST.length}</span>
+          </div>
+          <div style={{height:4,background:"var(--border2)",borderRadius:2,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${progressPct}%`,background:"var(--accent)",borderRadius:2,transition:"width 0.3s ease"}}/>
+          </div>
+        </div>
+        <div className="card" style={{padding:28}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:40,marginBottom:6}}>{currentSkill?.icon}</div>
+            <div style={{fontSize:10,fontWeight:700,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase"}}>
+              {subPhase === "caregiver"
+                ? `${isCgMode ? "Caregiver" : "Self"} · Question ${questionIndex + 1} of 3`
+                : `Learner task · ${taskIndex + 1} of 3`}
             </div>
           </div>
-
-          <div className="card" style={{padding:"32px 28px",textAlign:"center",position:"relative",overflow:"hidden",
-            animation:baseFb==="correct"?"correctPulse 0.4s ease":baseFb==="wrong"?"shake 0.35s ease":"none"}}>
-            <div style={{fontSize:64,marginBottom:14,lineHeight:1}}>{btask.icon}</div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20}}>
-              <p style={{fontSize:"clamp(15px,3vw,18px)",fontWeight:500,lineHeight:1.5,color:"var(--text)"}}>{btask.q}</p>
-              {settings?.audioEnabled && <button className="voice-btn" onClick={()=>speak(btask.q)}>🔊</button>}
-            </div>
-
-            {/* COIN PICKER */}
-            {btask.type === "coin" && (
-              <>
-                <div style={{display:"flex",justifyContent:"center",gap:12,flexWrap:"wrap",marginBottom:20}}>
-                  {COINS.map((c,i)=>(
-                    <Tip key={i} label={c.hint} placement="above">
-                      <button onClick={()=>!baseFb&&setCoinSel(i)} style={{
-                        width:68,height:68,borderRadius:"50%",
-                        background:i===0?"#b87333":i===1?"#8c8c8c":i===2?"#b0b0b0":i===3?"#a8a9ad":"#d4a017",
-                        border:`3px solid ${coinSel===i?"var(--green)":"rgba(255,255,255,0.3)"}`,
-                        color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer",
-                        transform:coinSel===i?"scale(1.15)":"scale(1)",
-                        transition:"all 0.2s",
-                        boxShadow:coinSel===i?"0 0 0 4px var(--green-dim)":"none",
-                      }}>{c.label}</button>
-                    </Tip>
-                  ))}
-                </div>
-                <p style={{fontSize:12,color:"var(--text3)",marginBottom:16}}>💡 {btask.hint}</p>
-                {coinSel !== null && !baseFb && (
-                  <button className="btn btn-primary" style={{width:"100%"}} onClick={()=>answerBaseline(coinSel)}>
-                    Confirm — I choose {COINS[coinSel].label}
-                  </button>
-                )}
-              </>
-            )}
-
-            {/* CLOCK */}
-            {btask.type === "clock" && (
-              <>
-                <div className="clock-face" style={{margin:"0 auto 20px"}}>
-                  {[...Array(12)].map((_,i)=>(
-                    <div key={i} style={{position:"absolute",top:"50%",left:"50%",width:2,height:i%3===0?10:6,background:"var(--text3)",borderRadius:1,transformOrigin:"0 0",transform:`rotate(${i*30}deg) translate(-1px,-78px)`}}/>
-                  ))}
-                  {[[0,"12"],[90,"3"],[180,"6"],[270,"9"]].map(([deg,num])=>{
-                    const rad=(deg-90)*Math.PI/180;
-                    return <div key={num} style={{position:"absolute",top:`calc(50% + ${Math.sin(rad)*58}px - 7px)`,left:`calc(50% + ${Math.cos(rad)*58}px - 7px)`,fontSize:9,color:"var(--text2)",width:14,textAlign:"center",fontWeight:700}}>{num}</div>;
-                  })}
-                  <div className="clock-hand" style={{width:5,height:44,background:"var(--text)",transform:`translateX(-50%) rotate(${hourDeg}deg)`,marginLeft:"-2.5px"}}/>
-                  <div className="clock-hand" style={{width:3,height:62,background:"var(--accent2)",transform:`translateX(-50%) rotate(${minDeg}deg)`,marginLeft:"-1.5px"}}/>
-                  <div style={{position:"absolute",top:"50%",left:"50%",width:10,height:10,background:"var(--accent)",borderRadius:"50%",transform:"translate(-50%,-50%)"}}/>
-                </div>
-                <p style={{fontSize:11,color:"var(--text3)",marginBottom:14}}>Short hand = hours · Long hand = minutes</p>
-                <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {btask.opts.map((opt,i)=>(
-                    <button key={i} disabled={!!baseFb}
-                      onClick={()=>answerBaseline(i)}
-                      style={{
-                        background:baseFb&&i===btask.c?"var(--green-dim)":baseFb&&i!==btask.c?"var(--red-dim)":"var(--bg3)",
-                        border:`1.5px solid ${baseFb&&i===btask.c?"var(--green)":baseFb&&i!==btask.c?"var(--red)":"var(--border2)"}`,
-                        color:"var(--text)",fontSize:16,padding:"14px 18px",borderRadius:"var(--radius)",
-                        width:"100%",cursor:baseFb?"default":"pointer",fontFamily:"var(--font-body)",textAlign:"left",
-                        display:"flex",alignItems:"center",gap:10,
-                      }}>
-                      <span style={{fontSize:18}}>🕐</span>{opt}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* CHOICE (digital safety + change calculation) */}
-            {btask.type === "choice" && (
+          {subPhase === "caregiver" && (
+            <div>
+              <p style={{fontSize:17,fontWeight:500,color:"var(--text)",lineHeight:1.5,marginBottom:20,textAlign:"center"}}>
+                {questions[questionIndex]}
+              </p>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                {btask.opts.map((opt,i)=>(
-                  <button key={i} disabled={!!baseFb}
-                    onClick={()=>answerBaseline(i)}
-                    style={{
-                      background:baseFb&&i===btask.c?"var(--green-dim)":baseFb&&i!==btask.c?"var(--red-dim)":"var(--bg3)",
-                      border:`1.5px solid ${baseFb&&i===btask.c?"var(--green)":baseFb&&i!==btask.c?"var(--red)":"var(--border2)"}`,
-                      color:"var(--text)",fontSize:15,padding:"14px 16px",borderRadius:"var(--radius)",
-                      width:"100%",cursor:baseFb?"default":"pointer",fontFamily:"var(--font-body)",textAlign:"left",lineHeight:1.4,
-                    }}>
-                    {opt}
+                {["Not yet","Sometimes","Yes"].map((label, i) => (
+                  <button key={label} className="btn btn-ghost"
+                    style={{justifyContent:"flex-start",fontSize:15,padding:"14px 18px"}}
+                    onClick={() => handleCaregiverAnswer([0, 0.01, 0.02][i])}>
+                    {label}
                   </button>
                 ))}
-                <p style={{fontSize:12,color:"var(--text3)",marginTop:4}}>💡 {btask.hint}</p>
               </div>
-            )}
-
-            {baseFb && (
-              <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,pointerEvents:"none"}}>
-                {baseFb==="correct"?"🎉":"💡"}
+            </div>
+          )}
+          {subPhase === "learner" && tasks[taskIndex] && (
+            <div>
+              <p style={{fontSize:16,fontWeight:500,color:"var(--text)",lineHeight:1.5,marginBottom:20,textAlign:"center"}}>
+                {tasks[taskIndex].q}
+              </p>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {tasks[taskIndex].opts.map((opt, i) => {
+                  const isCorrect = i === tasks[taskIndex].correct
+                  return (
+                    <button key={i} disabled={!!taskFeedback} onClick={() => handleTaskAnswer(i)}
+                      className="btn"
+                      style={{
+                        justifyContent:"flex-start",fontSize:14,padding:"14px 16px",
+                        textAlign:"left",lineHeight:1.4,
+                        background:  taskFeedback && isCorrect  ? "var(--green-dim)"
+                                   : taskFeedback && !isCorrect ? "var(--red-dim)" : "var(--bg3)",
+                        border: `1.5px solid ${taskFeedback && isCorrect ? "var(--green)"
+                                             : taskFeedback && !isCorrect ? "var(--red)" : "var(--border2)"}`,
+                        color:"var(--text)",
+                      }}>
+                      {opt}
+                    </button>
+                  )
+                })}
               </div>
-            )}
-          </div>
-
-          <div style={{display:"flex",justifyContent:"space-between",marginTop:16}}>
-            {settings?.audioEnabled && <button className="btn btn-ghost btn-sm" onClick={()=>speak(btask.q)}>🔊 Read aloud</button>}
-            <button className="btn btn-ghost btn-sm" style={{marginLeft:"auto"}} onClick={()=>{
-              setCoinSel(null); setBaseFb(null);
-              setBaseAns(a=>({...a,[baseIdx]:false}));
-              if(baseIdx+1>=BASELINE_TASKS.length) setPhase("skills");
-              else setBaseIdx(baseIdx+1);
-            }}>Skip →</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── PHASE B: EXISTING SKILL QUESTIONS ──
-  return (
-    <div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,position:"relative",overflow:"hidden"}}>
-      {glow}
-      <div className="page-enter" style={{width:"100%",maxWidth:540,position:"relative",zIndex:1}}>
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <p style={{fontSize:11,fontWeight:600,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>
-            Skill Check · {skillNames[skill]} · {si+1} of {skillKeys.length}
-          </p>
-          <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:10}}>
-            {skillKeys.map((_,i)=>(
-              <div key={i} style={{width:36,height:5,borderRadius:3,background:i<si?"var(--green)":i===si?"var(--accent)":"var(--bg4)",transition:"background 0.4s"}}/>
-            ))}
-          </div>
-          <div className="progress-bar" style={{height:3,maxWidth:280,margin:"0 auto"}}>
-            <div className="progress-fill" style={{width:`${(doneSkill/totalSkill)*100}%`}}/>
-          </div>
-        </div>
-        <div className="card" style={{padding:"36px 28px",textAlign:"center",position:"relative",overflow:"hidden",
-          animation:fb==="correct"?"correctPulse 0.4s ease":fb==="wrong"?"shake 0.35s ease":"none"}}>
-          <div style={{fontSize:68,marginBottom:16,lineHeight:1}}>{task.icon}</div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:24}}>
-            <p style={{fontSize:"clamp(16px,3vw,19px)",fontWeight:500,lineHeight:1.5,color:"var(--text)"}}>{task.q}</p>
-            {settings?.audioEnabled && <button className="voice-btn" onClick={()=>speak(task.q)}>🔊</button>}
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {task.opts.map((opt,i)=>(
-              <button key={i} onClick={()=>answerSkill(i)} disabled={!!fb} style={{
-                background:fb&&i===task.c?"var(--green-dim)":fb&&i!==task.c?"var(--red-dim)":"var(--bg3)",
-                border:`1.5px solid ${fb&&i===task.c?"var(--green)":fb&&i!==task.c?"var(--red)":"var(--border2)"}`,
-                color:"var(--text)",fontSize:16,padding:"16px 18px",borderRadius:"var(--radius)",
-                width:"100%",cursor:fb?"default":"pointer",fontFamily:"var(--font-body)",textAlign:"left",
-              }}>{opt}</button>
-            ))}
-          </div>
-          {fb && <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,pointerEvents:"none"}}>{fb==="correct"?"🎉":"💡"}</div>}
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:18}}>
-          <button className="btn btn-ghost btn-sm" onClick={()=>settings?.audioEnabled&&speak(task.q)}>🔊 Read aloud</button>
-          <button className="btn btn-ghost btn-sm" onClick={()=>{
-            const nt=ti+1;
-            if(nt>=tasks.length){const ns=si+1;if(ns>=skillKeys.length)setPhase("done");else{setSi(ns);setTi(0);}}
-            else setTi(nt);
-          }}>Skip →</button>
+              {taskFeedback && (
+                <div style={{textAlign:"center",marginTop:16,fontSize:36}}>
+                  {taskFeedback === "correct" ? "✅" : "❌"}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
-  );
+  )
 }
+
 
 // ─────────────────────────────────────────────
 // HOME

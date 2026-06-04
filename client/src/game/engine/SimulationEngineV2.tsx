@@ -737,6 +737,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const queueSize        = useRef<number>(7)
   const originalAnswers  = useRef<AnswerRecord[]>([])
   const mainAnswers      = useRef<AnswerRecord[]>([])
+  const isHandlingAnswer = useRef(false)
 
   useEffect(() => {
     startSession(learnerId).then(ok => { if (!ok) console.warn('Session start failed') })
@@ -769,7 +770,10 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const isLast      = taskIndex + 1 >= queueSize.current
 
   async function handleAnswer(correct: boolean, responseTime: number, hintsUsed: number) {
-    if (!currentTask || feedback || logging) return
+    console.log('handleAnswer called:', correct, 'responseTime:', responseTime, 'hintsUsed:', hintsUsed)
+    if (isHandlingAnswer.current) return
+    isHandlingAnswer.current = true
+    if (!currentTask || feedback || logging) { isHandlingAnswer.current = false; return }
     setLogging(true)
     let mastery = prevMastery
     let frustrationDelta = 0
@@ -799,10 +803,12 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     mainAnswers.current = nextAnswers
     setAnswers(nextAnswers)
     sessionAnswers.current = [...sessionAnswers.current, record]
+    console.log('answer recorded, answers array length:', sessionAnswers.current.length, 'last answer correct:', sessionAnswers.current[sessionAnswers.current.length-1]?.correct)
     setDoneIds(prev => [...prev, currentTask.id])
     setLogging(false)
     setConsecutiveWrong(correct ? 0 : consecutiveWrong + 1)
     setFeedback({ correct, mastery })
+    isHandlingAnswer.current = false
   }
 
   function evaluateSet(currentAnswers: AnswerRecord[]) {
