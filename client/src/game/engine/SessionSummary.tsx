@@ -26,7 +26,8 @@ interface SessionSummaryProps {
   tasksCorrect: number
   weakTopics: WeakTopic[]
   highPerformerGaps: HighPerformerGap[]
-  guidedModeTriggered: boolean
+  followUpTriggered: boolean
+  promotedWithRemediation: boolean
   onContinue: () => void
   onOptionalChallenge: () => void
   onHome: () => void
@@ -71,7 +72,8 @@ export default function SessionSummary({
   tasksCorrect,
   weakTopics,
   highPerformerGaps,
-  guidedModeTriggered,
+  followUpTriggered,
+  promotedWithRemediation,
   onContinue,
   onOptionalChallenge,
   onHome,
@@ -202,10 +204,10 @@ export default function SessionSummary({
             <div style={s.statValue}>{tasksAttempted}</div>
             <div style={s.statLabel}>Attempted</div>
           </div>
-          {guidedModeTriggered && (
+          {followUpTriggered && (
             <div style={{ ...s.statCard, ...s.statCardGuided }}>
-              <div style={s.statValue}>💡</div>
-              <div style={s.statLabel}>Guided help used</div>
+              <div style={s.statValue}>{promotedWithRemediation ? '💪' : '💡'}</div>
+              <div style={s.statLabel}>{promotedWithRemediation ? 'Extra practice done' : 'Follow-up given'}</div>
             </div>
           )}
         </div>
@@ -267,10 +269,12 @@ export default function SessionSummary({
           </div>
         )}
 
-        {/* ── Gentle message if guided mode was triggered ── */}
-        {guidedModeTriggered && showStats && (
+        {/* ── Gentle message if follow-up was triggered ── */}
+        {followUpTriggered && showStats && (
           <div style={s.gentleMessage}>
-            This one was tricky — let's keep going and come back to it later! 💪
+            {promotedWithRemediation
+              ? 'Great effort on the extra practice — that\'s how you grow! 💪'
+              : 'This one was tricky — let\'s keep going and come back to it later! 💪'}
           </div>
         )}
 

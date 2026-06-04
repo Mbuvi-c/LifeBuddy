@@ -1,6 +1,6 @@
 // SimulationEngine.tsx
 // Main orchestrator for the simulation and assessment.
-// Manages task flow, BKT updates, promotion logic, retry, guided mode.
+// Manages task flow, BKT updates, promotion logic, follow-up remediation.
 // Calls adaptive engine after every question in real time.
 
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -23,7 +23,7 @@ import SessionSummary from './SessionSummary'
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Difficulty = 'easy' | 'intermediate' | 'advanced'
-type Phase = 'loading' | 'task' | 'feedback' | 'between_difficulty' | 'summary'
+type Phase = 'loading' | 'task' | 'feedback' | 'summary'
 
 interface AttemptRecord {
   taskId: string
@@ -39,8 +39,6 @@ interface DifficultyResult {
   attempts: AttemptRecord[]
   averageMastery: number
   passed: boolean
-  retriesUsed: number
-  guidedModeTriggered: boolean
 }
 
 interface SimulationEngineProps {
@@ -143,38 +141,37 @@ export default function SimulationEngine({
   const allTasks = MONEY_TRANSACTIONS_TASKS
 
   // ── Session state ──────────────────────────────────────────────────────────
-  const [phase, setPhase]                 = useState<Phase>('loading')
-  const [currentTier, setCurrentTier]     = useState<1 | 2 | 3>(1)
-  const [currentDiff, setCurrentDiff]     = useState<Difficulty>('easy')
-  const [taskQueue, setTaskQueue]         = useState<Task[]>([])
-  const [taskIndex, setTaskIndex]         = useState(0)
-  const [attempts, setAttempts]           = useState<AttemptRecord[]>([])
-  const [diffResults, setDiffResults]     = useState<DifficultyResult[]>([])
-  const [retriesUsed, setRetriesUsed]     = useState(0)
-  const [guidedMode, setGuidedMode]       = useState(false)
-  const [guidedTriggered, setGuidedTriggered] = useState(false)
-  const [completedTaskIds, setCompletedTaskIds] = useState<string[]>([])
-  const [lastCorrect, setLastCorrect]     = useState(false)
-  const [currentMastery, setCurrentMastery] = useState(0.15)
-  const [previousMastery, setPreviousMastery] = useState(0.15)
+  const [phase, setPhase]                         = useState<Phase>('loading')
+  const [currentTier, setCurrentTier]             = useState<1 | 2 | 3>(1)
+  const [currentDiff, setCurrentDiff]             = useState<Difficulty>('easy')
+  const [taskQueue, setTaskQueue]                 = useState<Task[]>([])
+  const [taskIndex, setTaskIndex]                 = useState(0)
+  const [attempts, setAttempts]                   = useState<AttemptRecord[]>([])
+  const [diffResults, setDiffResults]             = useState<DifficultyResult[]>([])
+  const [followUpPhase, setFollowUpPhase]         = useState(false)
+  const [followUpQueue, setFollowUpQueue]         = useState<Task[]>([])
+  const [followUpIndex, setFollowUpIndex]         = useState(0)
+  const [followUpTriggered, setFollowUpTriggered] = useState(false)
+  const [promotedWithRemediation, setPromotedWithRemediation] = useState(false)
+  const [followUpFeedback, setFollowUpFeedback]   = useState<{ correct: boolean; explanation: string } | null>(null)
+  const [completedTaskIds, setCompletedTaskIds]   = useState<string[]>([])
+  const [lastCorrect, setLastCorrect]             = useState(false)
+  const [currentMastery, setCurrentMastery]       = useState(0.15)
+  const [previousMastery, setPreviousMastery]     = useState(0.15)
   const [sessionStartMastery, setSessionStartMastery] = useState(0.15)
-  const [hintsAllowed, setHintsAllowed]   = useState(true)
-  const attemptNumber                     = useRef(1)
-  const latestAttempts                    = useRef<AttemptRecord[]>([])
+  const [hintsAllowed, setHintsAllowed]           = useState(true)
+  const attemptNumber  = useRef(1)
+  const latestAttempts = useRef<AttemptRecord[]>([])
 
   // ── Init session ───────────────────────────────────────────────────────────
   useEffect(() => {
     initSession()
   }, [])
 
-async function initSession() {
+  async function initSession() {
     console.log('initSession called, skillId:', skillId, 'allTasks:', allTasks.length)
-    console.log('SKILL_TASK_MAP keys:', Object.keys(SKILL_TASK_MAP))
-    console.log('direct lookup:', SKILL_TASK_MAP[skillId]?.length)
-    console.log('MONEY_TRANSACTIONS_TASKS length:', MONEY_TRANSACTIONS_TASKS.length)
     await startSession(learnerId)
 
-    // Try to restore saved session state
     const saved = await loadSessionState(learnerId)
     if (saved && saved.skill === skillId) {
       setCurrentTier(saved.tier as 1 | 2 | 3)
@@ -192,7 +189,7 @@ async function initSession() {
     )
   }
 
-function loadDifficulty(
+  function loadDifficulty(
     tier: 1 | 2 | 3,
     difficulty: Difficulty,
     exclude: string[]
@@ -201,10 +198,8 @@ function loadDifficulty(
     console.log('loadDifficulty:', tier, difficulty, 'tasks found:', tasks.length, 'allTasks:', allTasks.length)
     setTaskQueue(tasks)
     setTaskIndex(0)
-    setAttempts([])
     setPhase('task')
 
-    // Play question audio for first task
     if (tasks[0]) {
       playQuestionAudio(tasks[0].id, skillId)
     }
@@ -213,7 +208,7 @@ function loadDifficulty(
   // ── Current task ───────────────────────────────────────────────────────────
   const currentTask = taskQueue[taskIndex] ?? null
 
-  // ── Handle answer ──────────────────────────────────────────────────────────
+  // ── Handle answer (main tasks) ─────────────────────────────────────────────
   const handleAnswer = useCallback(async (
     correct: boolean,
     responseTime: number,
@@ -224,8 +219,6 @@ function loadDifficulty(
     setLastCorrect(correct)
     setPhase('feedback')
 
-
-    // Log to adaptive engine
     const attempt = {
       learner_id:      learnerId,
       simulation_type: 'functional_life_skills',
@@ -240,10 +233,18 @@ function loadDifficulty(
     }
 
     let newMastery = currentMastery
+    let record: AttemptRecord = {
+      taskId:      currentTask.id,
+      topic:       currentTask.topic,
+      correct,
+      mastery:     currentMastery,
+      hintsUsed,
+      responseTime,
+    }
 
     if (isOnline()) {
       const response = await logAttempt(attempt)
-     if (response) {
+      if (response) {
         newMastery = response.mastery
         setCurrentMastery(response.mastery)
 
@@ -253,22 +254,9 @@ function loadDifficulty(
           setHintsAllowed(false)
         }
 
-        // Record attempt with real mastery from engine
-        const record: AttemptRecord = {
-          taskId:       currentTask.id,
-          topic:        currentTask.topic,
-          correct,
-          mastery:      newMastery,
-          hintsUsed,
-          responseTime,
-        }
-        const newAttempts = [...attempts, record]
-        setAttempts(newAttempts)
-        latestAttempts.current = newAttempts
-        setCompletedTaskIds(prev => [...prev, currentTask.id])
+        record = { ...record, mastery: newMastery }
       }
     } else {
-      // Offline — save for later sync
       await savePendingAttempt({
         learner_id:    learnerId,
         skill:         skillId,
@@ -281,30 +269,57 @@ function loadDifficulty(
       })
     }
 
-    // Save session state for offline resume
-    await saveSessionState({
-      learner_id:              learnerId,
-      skill:                   skillId,
-      tier:                    currentTier,
-      difficulty:              currentDiff,
-      difficulty_attempts:     retriesUsed,
-      tasks_completed:         [...completedTaskIds, currentTask.id],
-      weak_topics:             [],
-      high_performer_gaps:     [],
-      guided_mode_triggered:   guidedTriggered,
-      current_task_index:      taskIndex + 1,
-      mastery:                 newMastery,
-      last_updated:            Date.now(),
-    })
+    // Always record every attempt regardless of online status
+    const newAttempts = [...attempts, record]
+    setAttempts(newAttempts)
+    latestAttempts.current = newAttempts
+    setCompletedTaskIds(prev => [...prev, currentTask.id])
 
-  }, [currentTask, currentMastery, attempts, learnerId, skillId, currentTier, currentDiff, completedTaskIds, retriesUsed, guidedTriggered, taskIndex])
+    await saveSessionState({
+      learner_id:            learnerId,
+      skill:                 skillId,
+      tier:                  currentTier,
+      difficulty:            currentDiff,
+      difficulty_attempts:   0,
+      tasks_completed:       [...completedTaskIds, currentTask.id],
+      weak_topics:           [],
+      high_performer_gaps:   [],
+      guided_mode_triggered: false,
+      current_task_index:    taskIndex + 1,
+      mastery:               newMastery,
+      last_updated:          Date.now(),
+    })
+  }, [currentTask, currentMastery, attempts, learnerId, skillId, currentTier, currentDiff, completedTaskIds, taskIndex])
+
+  // ── Handle follow-up answer (no logAttempt, advances index only) ───────────
+  const handleFollowUpAnswer = useCallback((
+    correct: boolean,
+    _responseTime: number,
+    _hintsUsed: number
+  ) => {
+    const task = followUpQueue[followUpIndex]
+    if (!task) return
+
+    setFollowUpFeedback({ correct, explanation: task.explanation })
+
+    setTimeout(() => {
+      setFollowUpFeedback(null)
+      const isLast = followUpIndex >= followUpQueue.length - 1
+      if (isLast) {
+        finishSession(diffResults, true)
+      } else {
+        const next = followUpIndex + 1
+        setFollowUpIndex(next)
+        playQuestionAudio(followUpQueue[next].id, skillId)
+      }
+    }, 2000)
+  }, [followUpQueue, followUpIndex, diffResults, skillId])
 
   // ── Handle feedback dismiss ────────────────────────────────────────────────
   const handleFeedbackDismiss = useCallback(() => {
     const isLastTask = taskIndex >= taskQueue.length - 1
 
     if (!isLastTask) {
-      // More tasks in this difficulty — advance
       const nextIndex = taskIndex + 1
       setTaskIndex(nextIndex)
       setPhase('task')
@@ -314,50 +329,38 @@ function loadDifficulty(
       return
     }
 
-    // All tasks in this difficulty done — evaluate
-   evaluateDifficulty(latestAttempts.current)
+    evaluateDifficulty(latestAttempts.current)
+  }, [taskIndex, taskQueue, skillId])
 
-}, [taskIndex, taskQueue, skillId])
+  function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
+    const localBKT = calcAverageMastery(latestAttempts.current)
+    const passed   = localBKT >= MASTERY_THRESHOLD
 
-function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
-    console.log('evaluateDifficulty:', completedAttempts.length, 'attempts')
-    console.log('retriesUsed:', retriesUsed, 'guidedMode:', guidedMode)
-    const avgMastery = calcAverageMastery(completedAttempts)
-    console.log('avgMastery:', avgMastery, 'passed:', avgMastery >= MASTERY_THRESHOLD)
-    const passed     = avgMastery >= MASTERY_THRESHOLD
+    console.log('evaluateDifficulty: localBKT =', localBKT, 'passed =', passed)
 
     const result: DifficultyResult = {
-      difficulty:            currentDiff,
-      attempts:              completedAttempts,
-      averageMastery:        avgMastery,
+      difficulty:     currentDiff,
+      attempts:       completedAttempts,
+      averageMastery: localBKT,
       passed,
-      retriesUsed,
-      guidedModeTriggered:   guidedMode,
     }
 
+    const newResults = [...diffResults, result]
+    setDiffResults(newResults)
+
     if (passed) {
-      // Passed — promote to next difficulty or tier
-      const newResults = [...diffResults, result]
-      setDiffResults(newResults)
-      setRetriesUsed(0)
-      setGuidedMode(false)
       promote(newResults)
-    } else if (retriesUsed === 0) {
-      // First failure — retry with variation tasks
-      setRetriesUsed(1)
-      setAttempts([])
-      const exclude = completedAttempts.map(a => a.taskId)
-      loadDifficulty(currentTier, currentDiff, [...completedTaskIds, ...exclude])
     } else {
-      // Second failure — guided mode
-      setGuidedMode(true)
-      setGuidedTriggered(true)
-      setRetriesUsed(0)
-      setAttempts([])
-      const newResults = [...diffResults, { ...result, guidedModeTriggered: true }]
-      setDiffResults(newResults)
-      // Load tasks again in guided mode
-      loadDifficulty(currentTier, currentDiff, completedTaskIds)
+      // Load 7 follow-up tasks from same difficulty
+      const followUpTasks = getTasksForDifficulty(allTasks, currentTier, currentDiff, completedTaskIds)
+      console.log('Starting follow-up phase:', followUpTasks.length, 'tasks')
+      setFollowUpPhase(true)
+      setFollowUpTriggered(true)
+      setFollowUpQueue(followUpTasks)
+      setFollowUpIndex(0)
+      if (followUpTasks[0]) {
+        playQuestionAudio(followUpTasks[0].id, skillId)
+      }
     }
   }
 
@@ -367,58 +370,37 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
     const tierIndex = TIERS.indexOf(currentTier)
 
     if (diffIndex < DIFFICULTIES.length - 1) {
-      // Next difficulty within same tier
       const nextDiff = DIFFICULTIES[diffIndex + 1]
       setCurrentDiff(nextDiff)
       setPreviousMastery(currentMastery)
-      setPhase('between_difficulty')
+      loadDifficulty(currentTier, nextDiff, completedTaskIds)
     } else if (tierIndex < TIERS.length - 1) {
-      // Next tier
       const nextTier = TIERS[tierIndex + 1] as 1 | 2 | 3
       setCurrentTier(nextTier)
       setCurrentDiff('easy')
       setPreviousMastery(currentMastery)
-      setPhase('between_difficulty')
+      loadDifficulty(nextTier, 'easy', completedTaskIds)
     } else {
-      // All tiers and difficulties complete
       finishSession(results)
     }
   }
 
-  // ── Between difficulty transition ─────────────────────────────────────────
-  function handleContinueFromTransition() {
-    loadDifficulty(currentTier, currentDiff, completedTaskIds)
-  }
-
   // ── Finish session ─────────────────────────────────────────────────────────
-  async function finishSession(results: DifficultyResult[]) {
+  async function finishSession(results: DifficultyResult[], promotedWithRemediationFlag = false) {
     await endSession(learnerId)
     await clearSessionState(learnerId)
     setDiffResults(results)
+    if (promotedWithRemediationFlag) setPromotedWithRemediation(true)
     setPhase('summary')
   }
 
-  // ── Guided mode completion ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!guidedMode) return
-    if (taskIndex >= taskQueue.length - 1 && phase === 'feedback') {
-      // After guided mode — load variation tasks
-      setGuidedMode(false)
-      const exclude = taskQueue.map(t => t.id)
-      loadDifficulty(currentTier, currentDiff, [...completedTaskIds, ...exclude])
-    }
-  }, [guidedMode, taskIndex, taskQueue, phase])
-
   // ── Render interaction based on task type ─────────────────────────────────
-  function renderInteraction() {
-    if (!currentTask) return null
-    const props = {
-      task:         currentTask,
-      learnerId,
-      onAnswer:     handleAnswer,
-      hintsAllowed: guidedMode ? false : hintsAllowed,
-    }
-    switch (currentTask.type) {
+  function renderInteraction(
+    task: Task,
+    onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
+  ) {
+    const props = { task, learnerId, onAnswer, hintsAllowed }
+    switch (task.type) {
       case 'tap_select':       return <TapSelect       {...props} />
       case 'true_false':       return <TrueFalse       {...props} />
       case 'fill_blank':       return <FillBlank       {...props} />
@@ -459,17 +441,16 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
         tasksCorrect={totalCorrect}
         weakTopics={weakTopics}
         highPerformerGaps={hpGaps}
-        guidedModeTriggered={guidedTriggered}
+        promotedWithRemediation={promotedWithRemediation}
+        followUpTriggered={followUpTriggered}
         onContinue={onComplete}
         onOptionalChallenge={() => {
-          // Load optional challenge tasks for high performer gaps
           const gapTopics = hpGaps.map(g => g.topic)
           const challengeTasks = allTasks.filter(t =>
             gapTopics.includes(t.topic) && !completedTaskIds.includes(t.id)
           ).slice(0, gapTopics.length)
           setTaskQueue(challengeTasks)
           setTaskIndex(0)
-          setAttempts([])
           setPhase('task')
           if (challengeTasks[0]) {
             playQuestionAudio(challengeTasks[0].id, skillId)
@@ -480,34 +461,79 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
     )
   }
 
-  if (phase === 'between_difficulty') {
-    const diffIndex  = DIFFICULTIES.indexOf(currentDiff)
-    const isNewTier  = diffIndex === 0
+  // ── Follow-up phase ────────────────────────────────────────────────────────
+  if (followUpPhase) {
+    const followUpTask = followUpQueue[followUpIndex] ?? null
     return (
-      <div style={s.center}>
-        <div style={s.transitionCard}>
-          <div style={s.transitionIcon}>{isNewTier ? '🚀' : '⭐'}</div>
-          <div style={s.transitionTitle}>
-            {isNewTier
-              ? `Tier ${currentTier} Unlocked!`
-              : `${currentDiff.charAt(0).toUpperCase() + currentDiff.slice(1)} Level!`}
+      <div style={s.root}>
+
+        {/* Header */}
+        <div style={s.header}>
+          <div style={s.headerLeft}>
+            <button style={s.homeBtn} onClick={onHome}>←</button>
+            <div style={s.skillLabel}>{SKILL_NAMES[skillId] ?? skillId}</div>
           </div>
-          <div style={s.transitionText}>
-            {isNewTier
-              ? `You have completed all of Tier ${currentTier - 1}. Ready for the next level?`
-              : `Great work! Moving to ${currentDiff} tasks.`}
+          <div style={s.headerRight}>
+            <div style={s.tierChip}>
+              T{currentTier} · {currentDiff.charAt(0).toUpperCase() + currentDiff.slice(1)}
+            </div>
+            <div style={s.followUpChip}>💪 Follow-up</div>
           </div>
-          <div style={s.masteryChip}>
-            Mastery: {Math.round(currentMastery * 100)}%
-          </div>
-          <button style={s.continueBtn} onClick={handleContinueFromTransition}>
-            Continue →
-          </button>
         </div>
+
+        {/* Progress bar */}
+        <div style={s.progressWrap}>
+          <div style={s.progressTrack}>
+            <div style={{
+              ...s.progressFill,
+              width: `${(followUpIndex / followUpQueue.length) * 100}%`,
+              background: 'linear-gradient(90deg, #6d28d9, #c084fc)',
+            }} />
+          </div>
+          <span style={s.progressLabel}>
+            {followUpIndex + 1} / {followUpQueue.length}
+          </span>
+        </div>
+
+        {/* Task area */}
+        <div style={s.taskArea}>
+          {followUpTask && renderInteraction(followUpTask, handleFollowUpAnswer)}
+        </div>
+
+        {/* Follow-up feedback overlay — auto-dismisses after 2s */}
+        {followUpFeedback && (
+          <>
+            <div style={s.feedbackBackdrop} />
+            <div style={{
+              ...s.followUpFeedbackCard,
+              borderColor: followUpFeedback.correct
+                ? 'rgba(74,222,128,0.4)'
+                : 'rgba(248,113,113,0.4)',
+              background: followUpFeedback.correct
+                ? 'rgba(13,35,24,0.97)'
+                : 'rgba(30,10,20,0.97)',
+            }}>
+              <div style={s.followUpFeedbackIcon}>
+                {followUpFeedback.correct ? '✅' : '❌'}
+              </div>
+              <div style={{
+                ...s.followUpFeedbackTitle,
+                color: followUpFeedback.correct ? '#4ade80' : '#f87171',
+              }}>
+                {followUpFeedback.correct ? 'Correct!' : 'Not quite'}
+              </div>
+              <div style={s.followUpFeedbackExplanation}>
+                {followUpFeedback.explanation}
+              </div>
+            </div>
+          </>
+        )}
+
       </div>
     )
   }
 
+  // ── Main task phase ────────────────────────────────────────────────────────
   return (
     <div style={s.root}>
 
@@ -523,9 +549,6 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
           <div style={s.tierChip}>
             T{currentTier} · {currentDiff.charAt(0).toUpperCase() + currentDiff.slice(1)}
           </div>
-          {guidedMode && (
-            <div style={s.guidedChip}>💡 Guided</div>
-          )}
         </div>
       </div>
 
@@ -534,7 +557,7 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
         <div style={s.progressTrack}>
           <div style={{
             ...s.progressFill,
-            width: `${((taskIndex) / TASKS_PER_DIFFICULTY) * 100}%`,
+            width: `${(taskIndex / TASKS_PER_DIFFICULTY) * 100}%`,
           }} />
         </div>
         <span style={s.progressLabel}>
@@ -544,14 +567,14 @@ function evaluateDifficulty(completedAttempts: AttemptRecord[]) {
 
       {/* Task area */}
       <div style={s.taskArea}>
-        {currentTask && renderInteraction()}
+        {currentTask && renderInteraction(currentTask, handleAnswer)}
       </div>
 
       {/* Feedback overlay */}
       {phase === 'feedback' && (
         <FeedbackOverlay
           correct={lastCorrect}
-          guidedMode={guidedMode}
+          guidedMode={false}
           onDismiss={handleFeedbackDismiss}
         />
       )}
@@ -620,14 +643,14 @@ const s: Record<string, any> = {
     color: '#a855f7',
     letterSpacing: '0.05em',
   },
-  guidedChip: {
+  followUpChip: {
     padding: '4px 10px',
     borderRadius: 20,
-    background: 'rgba(251,191,36,0.1)',
-    border: '1px solid rgba(251,191,36,0.25)',
+    background: 'rgba(192,132,252,0.1)',
+    border: '1px solid rgba(192,132,252,0.25)',
     fontSize: 11,
     fontWeight: 700,
-    color: '#fbbf24',
+    color: '#c084fc',
   },
 
   // Progress
@@ -688,57 +711,43 @@ const s: Record<string, any> = {
     color: 'rgba(240,234,255,0.4)',
   },
 
-  // Between difficulty transition
-  transitionCard: {
-    width: '100%',
-    maxWidth: 380,
-    background: '#0e0a1a',
-    border: '1px solid rgba(168,85,247,0.2)',
-    borderRadius: 28,
-    padding: 32,
+  // Follow-up feedback overlay
+  feedbackBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 199,
+    backdropFilter: 'blur(6px)',
+    background: 'rgba(0,0,0,0.5)',
+  },
+  followUpFeedbackCard: {
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: 200,
+    borderRadius: 24,
+    border: '1.5px solid',
+    padding: '40px 44px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 16,
+    gap: 14,
+    minWidth: 300,
+    maxWidth: 400,
     textAlign: 'center',
-    boxShadow: '0 0 40px rgba(168,85,247,0.1)',
-    margin: '0 20px',
+    boxShadow: '0 8px 48px rgba(0,0,0,0.4)',
   },
-  transitionIcon: {
+  followUpFeedbackIcon: {
     fontSize: 52,
   },
-  transitionTitle: {
-    fontSize: 22,
-    fontWeight: 800,
-    color: '#f0eaff',
+  followUpFeedbackTitle: {
+    fontSize: 20,
+    fontWeight: 700,
     fontFamily: "'Syne', sans-serif",
   },
-  transitionText: {
-    fontSize: 14,
-    color: 'rgba(240,234,255,0.6)',
-    lineHeight: 1.6,
-  },
-  masteryChip: {
-    padding: '6px 16px',
-    borderRadius: 20,
-    background: 'rgba(168,85,247,0.12)',
-    border: '1px solid rgba(168,85,247,0.25)',
+  followUpFeedbackExplanation: {
     fontSize: 13,
-    fontWeight: 700,
-    color: '#a855f7',
-  },
-  continueBtn: {
-    width: '100%',
-    padding: '14px 20px',
-    borderRadius: 14,
-    background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-    border: 'none',
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 700,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    boxShadow: '0 4px 20px rgba(168,85,247,0.3)',
-    marginTop: 8,
+    color: 'rgba(240,234,255,0.7)',
+    lineHeight: 1.6,
   },
 }

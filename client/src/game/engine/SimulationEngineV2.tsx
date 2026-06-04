@@ -65,6 +65,7 @@ interface DifficultyReport {
   avgMastery: number; correct: number; total: number
   hintsUsed: number; avgResponse: number
   answers: AnswerRecord[]
+  promotedWithRemediation: boolean
 }
 
 interface SimulationEngineV2Props {
@@ -730,13 +731,16 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   const [prevMastery,        setPrevMastery]         = useState(0.15)
   const [recommendedSkill,   setRecommendedSkill]    = useState('time_planning')
 
-  const taskStartTime  = useRef<number>(Date.now())
-  const sessionAnswers = useRef<AnswerRecord[]>([])
-  const answeredIds    = useRef<Set<string>>(new Set())
-  const queueSize      = useRef<number>(7)
+  const taskStartTime    = useRef<number>(Date.now())
+  const sessionAnswers   = useRef<AnswerRecord[]>([])
+  const answeredIds      = useRef<Set<string>>(new Set())
+  const queueSize        = useRef<number>(7)
+  const originalAnswers  = useRef<AnswerRecord[]>([])
+  const mainAnswers      = useRef<AnswerRecord[]>([])
 
   useEffect(() => {
     startSession(learnerId).then(ok => { if (!ok) console.warn('Session start failed') })
+    mainAnswers.current = []
     loadQueue(currentTier, currentDiff, [])
   }, [])
 
@@ -791,7 +795,9 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       mastery, prevMastery, frustrationDelta,
     }
     setPrevMastery(mastery)
-    setAnswers(prev => [...prev, record])
+    const nextAnswers = [...mainAnswers.current, record]
+    mainAnswers.current = nextAnswers
+    setAnswers(nextAnswers)
     sessionAnswers.current = [...sessionAnswers.current, record]
     setDoneIds(prev => [...prev, currentTask.id])
     setLogging(false)
@@ -805,13 +811,15 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     return { passed: avgMastery >= 0.70, avgMastery }
   }
 
-  function buildReport(ans: AnswerRecord[], tier: 1|2|3, diff: Difficulty, passed: boolean, avgMastery: number): DifficultyReport {
+  function buildReport(ans: AnswerRecord[], tier: 1|2|3, diff: Difficulty, passed: boolean, avgMastery: number, promotedWithRemediation = false): DifficultyReport {
+    ans = ans.slice(0, 7)
     return {
       tier, difficulty: diff, passed, avgMastery, answers: ans,
       correct:     ans.filter(a => a.correct).length,
       total:       ans.length,
       hintsUsed:   ans.reduce((s, a) => s + a.hintsUsed, 0),
       avgResponse: ans.length > 0 ? ans.reduce((s, a) => s + a.responseTime, 0) / ans.length : 0,
+      promotedWithRemediation,
     }
   }
 
@@ -826,8 +834,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
     setFeedback(null)
     if (!isLast) { setTaskIndex(i => i + 1); return }
 
-    const diffStartIndex = sessionAnswers.current.length - answers.length
-    const currentAnswers = sessionAnswers.current.slice(diffStartIndex)
+    const currentAnswers = mainAnswers.current
     const { passed, avgMastery } = evaluateSet(currentAnswers)
     const report = buildReport(currentAnswers, currentTier, currentDiff, passed, avgMastery)
 
@@ -839,6 +846,8 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
         setNextTransition(next)
         setShowProgressReport(true)
       } else {
+        originalAnswers.current = [...mainAnswers.current]
+        mainAnswers.current = []
         setPhase('followup')
         setFollowUpDiff(currentDiff)
         setShowFollowUpBanner(true)
@@ -847,13 +856,14 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
         loadQueue(currentTier, currentDiff, [], true)
       }
     } else if (phase === 'followup') {
-      setDifficultyReports(prev => [...prev, report])
+      const remediationReport = buildReport(originalAnswers.current, currentTier, currentDiff, passed, avgMastery, true)
+      setDifficultyReports(prev => [...prev, remediationReport])
       setShowGentleBanner(true)
       const next = nextDifficultyOrTier(currentTier, currentDiff)
       setTimeout(() => {
         setShowGentleBanner(false)
         setNextTransition(next)
-        setCurrentReport(report)
+        setCurrentReport(remediationReport)
         setShowProgressReport(true)
       }, 3500)
     }
@@ -874,6 +884,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   function handleTransitionDone() {
     if (nextTransition) {
       const next = nextTransition
+      mainAnswers.current = []
       loadQueue(next.tier, next.diff, [])
       setCurrentTier(next.tier); setCurrentDiff(next.diff)
       setPhase('playing'); setAnswers([])
@@ -912,7 +923,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       <SessionSummaryScreen
         skillName={skillName} reports={difficultyReports}
         sessionMastery={sessionMastery} overallMastery={overallMastery}
-        onPlayAgain={() => { setShowSummary(false); setAnswers([]); sessionAnswers.current = []; setDifficultyReports([]); setPhase('playing'); loadQueue(1,'easy',[]) }}
+        onPlayAgain={() => { setShowSummary(false); setAnswers([]); sessionAnswers.current = []; mainAnswers.current = []; setDifficultyReports([]); setPhase('playing'); loadQueue(1,'easy',[]) }}
         onTryAnother={() => onGoBack?.()}
         recommendedSkill={recommendedSkill}
         hasTaskData={!!SKILL_TASK_MAP[recommendedSkill]}
