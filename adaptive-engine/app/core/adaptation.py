@@ -74,7 +74,32 @@ def reset_frustration_for_new_session(db: Session, learner_id: str):
     decayed_skills = apply_mastery_decay(skills, last_practiced)
     print("DEBUG bkt_profile after decay:", decayed_skills)
 
-    # 3. Persist both updates
+    # 3. Carry forward frustration based on time since last session
+    now = datetime.now(timezone.utc)
+    last_session_row = db.execute(
+        text("""SELECT end_time FROM sessions
+                WHERE learner_id = :lid AND end_time IS NOT NULL
+                ORDER BY end_time DESC LIMIT 1"""),
+        {"lid": learner_id}
+    ).fetchone()
+
+    if last_session_row and last_session_row.end_time:
+        last_end = last_session_row.end_time
+        if last_end.tzinfo is None:
+            last_end = last_end.replace(tzinfo=timezone.utc)
+        gap_hours = (now - last_end).total_seconds() / 3600
+        if gap_hours < 1:
+            new_frustration = round(current_frustration * 0.70, 4)
+        elif gap_hours < 4:
+            new_frustration = round(current_frustration * 0.40, 4)
+        elif gap_hours < 24:
+            new_frustration = round(current_frustration * 0.15, 4)
+        else:
+            new_frustration = 0.0
+    else:
+        new_frustration = 0.0
+
+    # 4. Persist both updates
     db.execute(
         text("""UPDATE learners
                 SET frustration_index = :fi,
@@ -232,6 +257,11 @@ def process_adaptation(db: Session, learner_id: str, skill: str = "money_transac
             "explanation":     result['explanation']
         }
 
+    # Check incoming mastery before BKT update (used for low-mastery auto-support)
+    skill_data_before = (bkt_profile.get("skills") or {}).get(skill, {})
+    incoming_mastery = skill_data_before.get("mastery", 0.15)
+    apply_low_mastery_support = attempt_number == 1 and incoming_mastery < 0.50
+
     # Pass response time into BKT profile for frustration calculation
     bkt_profile["response_time_ms"] = response_time
 
@@ -281,6 +311,12 @@ def process_adaptation(db: Session, learner_id: str, skill: str = "money_transac
         {"sig": new_signal, "id": learner_id}
     )
     db.commit()
+
+    # Override HCI config for learners entering with low mastery on first attempt
+    if apply_low_mastery_support:
+        bkt_result['hci_config']['hint_frequency']    = 'high'
+        bkt_result['hci_config']['pacing']            = 'slow'
+        bkt_result['hci_config']['scaffolding_level'] = 'high'
 
     save_bkt_profile(db, learner_id, skill, bkt_result['mastery'], bkt_result['frustration_index'])
     update_learner_tier(db, learner_id, final_tier)
@@ -332,7 +368,7 @@ async def store_onboarding_baseline(learner_id: str, skill_baselines: dict, db: 
     return {"success": True}
 
 
-def end_session(db: Session, learner_id: str) -> dict:
+def end_session(db: Session, learner_id: str, promoted_with_remediation: bool = False) -> dict:
     """
     Closes the current open session and returns a full summary.
     """
@@ -386,8 +422,9 @@ def end_session(db: Session, learner_id: str) -> dict:
 
     db.execute(
         text("""UPDATE sessions SET end_time = NOW(), completed = true,
-                total_tasks = :total, successful_tasks = :successful WHERE id = :sid"""),
-        {"total": total_tasks, "successful": successful, "sid": session_id}
+                total_tasks = :total, successful_tasks = :successful,
+                promoted_with_remediation = :pwr WHERE id = :sid"""),
+        {"total": total_tasks, "successful": successful, "pwr": promoted_with_remediation, "sid": session_id}
     )
     db.commit()
 
@@ -413,5 +450,6 @@ def end_session(db: Session, learner_id: str) -> dict:
         "tier_changes": [
             {"from": a.previous_tier, "to": a.new_tier, "explanation": a.explanation, "time": str(a.created_at)}
             for a in adaptations
-        ]
+        ],
+        "promoted_with_remediation": promoted_with_remediation,
     }

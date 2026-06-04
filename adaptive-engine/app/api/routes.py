@@ -213,12 +213,15 @@ def mark_notification_read(notification_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Notification marked as read", "id": notification_id}
 
+class EndSessionRequest(BaseModel):
+    promoted_with_remediation: Optional[bool] = False
+
 @router.post("/session/end/{learner_id}")
-def end_session_route(learner_id: str, db: Session = Depends(get_db)):
+def end_session_route(learner_id: str, request: EndSessionRequest = EndSessionRequest(), db: Session = Depends(get_db)):
     """
     Closes the current open session and returns a full summary.
     Call this when the learner finishes or exits a session.
     """
     from app.core.adaptation import end_session
-    result = end_session(db, learner_id)
+    result = end_session(db, learner_id, promoted_with_remediation=request.promoted_with_remediation)
     return result

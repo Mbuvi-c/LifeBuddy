@@ -118,12 +118,14 @@ export async function logAttempt(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function endSession(
-  learnerId: string
+  learnerId: string,
+  promotedWithRemediation: boolean = false
 ): Promise<SessionSummaryResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/adapt/session/end/${learnerId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoted_with_remediation: promotedWithRemediation }),
     })
     if (!res.ok) return null
     return await res.json()

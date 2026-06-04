@@ -915,7 +915,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
   async function handleSessionComplete() {
     await fetchNextSkill()
-    try { await endSession(learnerId) } catch { /* ignore */ }
+    try { await endSession(learnerId, difficultyReports.some(r => r.promotedWithRemediation)) } catch { /* ignore */ }
     setShowSummary(true)
     const sessionMastery = sessionAnswers.current.length > 0
       ? sessionAnswers.current.reduce((s, a) => s + a.mastery, 0) / sessionAnswers.current.length : 0.15
