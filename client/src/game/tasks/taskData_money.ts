@@ -21,6 +21,7 @@ export type Task = {
   dropZones?: { id: string; label: string }[]
   hint: string
   explanation: string
+  image?: string
 }
 
 
@@ -47,6 +48,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'The KES 20 coin is gold coloured and larger than the others.',
     explanation: 'The KES 20 coin is gold coloured and the largest of the small coins. Learning to tell coins apart by size and colour is essential.',
+    image: 'coin_kes20.png',
   },
   {
     id: 'mt_t1_easy_2',
@@ -73,6 +75,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'The smallest coin has the smallest value.',
     explanation: 'KES 1 is the smallest coin in Kenya. It is very small and silver coloured.',
+    image: 'coins_size_comparison.png',
   },
   {
     id: 'mt_t1_easy_4',
@@ -89,15 +92,16 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
   {
     id: 'mt_t1_easy_5',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
-    type: 'tap_select', topic: 'identifying notes',
-    question: 'Which note would you use to buy something costing KES 80 if you only have one note?',
+    type: 'tap_select', topic: 'KES notes',
+    question: 'Which is the highest value note in Kenya?',
     options: [
-      { id: 'a', label: 'KES 50 note', correct: false },
-      { id: 'b', label: 'KES 100 note', correct: true },
-      { id: 'c', label: 'KES 20 note', correct: false },
+      { id: 'a', label: 'KES 500', correct: false },
+      { id: 'b', label: 'KES 200', correct: false },
+      { id: 'c', label: 'KES 1,000', correct: true },
+      { id: 'd', label: 'KES 100', correct: false },
     ],
-    hint: 'You need a note worth more than KES 80.',
-    explanation: 'KES 100 is the smallest note worth more than KES 80. KES 50 is not enough. You would receive KES 20 change.',
+    hint: 'The biggest number is the highest value.',
+    explanation: 'KES 1,000 is the highest value note in Kenya. It is brown and used for large purchases.',
   },
   {
     id: 'mt_t1_easy_6',
@@ -110,6 +114,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Think about the less common coins in Kenya — there is one worth KES 40.',
     explanation: 'Kenya has coins worth KES 1, 5, 10, 20, and 40. The KES 40 coin is less commonly used but is legal tender.',
+    image: 'coin_kes40.png',
   },
   {
     id: 'mt_t1_easy_7',
@@ -124,6 +129,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Each Kenyan note has a unique colour. The green note is a high value one.',
     explanation: 'The KES 1,000 is brown, KES 500 note is green, KES 200 is blue , KES 100 is purple and KES 50 is reddish.',
+    image: 'notes_colours.png',
   },
 
   // ── Tier 1 / Intermediate ─────────────────────────────────────────────────
@@ -160,6 +166,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'KES 50 and 100 are smaller notes. KES 500 and 1,000 are larger notes.',
     explanation: 'KES 50 and 100 are used for everyday purchases. KES 500 and 1,000 are for bigger transactions.',
+    image: 'notes_small_large.png',
   },
   {
     id: 'mt_t1_int_3',
@@ -215,16 +222,15 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
   {
     id: 'mt_t1_int_7',
     skill: 'money_transactions', tier: 1, difficulty: 'intermediate',
-    type: 'tap_select', topic: 'identifying coins',
-    question: 'You need to pay exactly KES 15. Which coins would you use?',
+    type: 'tap_select', topic: 'KES notes',
+    question: 'Which note would you use to buy something costing KES 80 if you only have one note?',
     options: [
-      { id: 'a', label: 'One KES 10 and one KES 5', correct: true },
-      { id: 'b', label: 'Three KES 5 coins', correct: true },
-      { id: 'c', label: 'One KES 20 coin', correct: false },
-      { id: 'd', label: 'Two KES 10 coins', correct: false },
+      { id: 'a', label: 'KES 50 note', correct: false },
+      { id: 'b', label: 'KES 100 note', correct: true },
+      { id: 'c', label: 'KES 20 note', correct: false },
     ],
-    hint: 'Which combinations add up to exactly 15?',
-    explanation: 'KES 10 + KES 5 = KES 15. Three KES 5 coins also work: 5 + 5 + 5 = 15. KES 20 is too much and two KES 10 = KES 20.',
+    hint: 'You need a note worth more than KES 80.',
+    explanation: 'KES 100 is the smallest note worth more than KES 80. KES 50 is not enough. You would receive KES 20 change.',
   },
 
   // ── Tier 1 / Advanced ─────────────────────────────────────────────────────
@@ -300,10 +306,10 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     type: 'tap_select', topic: 'identifying notes',
     question: 'You need to pay KES 350. You only have KES 200 and KES 100 notes. What is the minimum number of notes you need?',
     options: [
-      { id: 'a', label: '2 notes — one KES 200 and one KES 100', correct: false },
-      { id: 'b', label: '3 notes — one KES 200 and two KES 100', correct: false },
-      { id: 'c', label: '2 notes — one KES 200 and one KES 100 gives only KES 300', correct: false },
-      { id: 'd', label: '3 notes — one KES 200 and one KES 100 and one KES 50 — but you have no KES 50, so you use 4 notes', correct: true },
+      { id: 'a', label: '1 note', correct: false },
+      { id: 'b', label: '2 notes', correct: false },
+      { id: 'c', label: '3 notes', correct: true },
+      { id: 'd', label: '5 notes', correct: false },
     ],
     hint: '200 + 100 = 300. You still need KES 50 more. You only have KES 100 notes left, so you overpay.',
     explanation: 'KES 200 + KES 100 = KES 300 — still KES 50 short. Adding another KES 100 gives KES 400. So you pay KES 400 with 3 notes and receive KES 50 change.',
@@ -329,6 +335,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Start with the smallest number and work up.',
     explanation: 'Correct order: KES 50 → KES 100 → KES 200 → KES 500 → KES 1,000.',
+    image: 'notes_all_values.png',
   },
 
   // =========================================================================
@@ -606,6 +613,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Unga + Oil + Sugar + Bread = 180 + 200 + 130 + 60 = KES 570. Adding eggs (90) = KES 660 — over budget.',
     explanation: 'Unga (180) + Oil (200) + Sugar (130) + Bread (60) = KES 570 — within budget with KES 30 to spare. Adding eggs would go over to KES 660.',
+    image: 'grocery_items.png',
   },
   {
     id: 'mt_t2_adv_6',
@@ -769,6 +777,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Essentials are things you need to survive and function. Non-essentials are wants.',
     explanation: 'Essentials: Unga (180) + Bus fare (150) + Data (100) + Vegetables (120) = KES 550. Non-essentials: Hotel chapati (200) + Phone case (350) = KES 550.',
+    image: 'essential_nonessential.png',
   },
   {
     id: 'mt_t3_int_3',
@@ -853,6 +862,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Add the items yourself: 400 + 350 + 200 + 300 + 150 = ?',
     explanation: '400+350+200+300+150 = KES 1,400. The shopkeeper overcharged by KES 100. Correct change from KES 2,000 is KES 600.',
+    image: 'shopkeeper_scenario.png',
   },
   {
     id: 'mt_t3_adv_2',
