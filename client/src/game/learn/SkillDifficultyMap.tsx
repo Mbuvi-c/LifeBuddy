@@ -27,6 +27,49 @@ const DIFFICULTIES: { key: Difficulty; label: string; desc: string }[] = [
   { key: 'advanced',     label: 'Advanced',      desc: 'Real-world money decisions' },
 ]
 
+const SKILL_DIFFICULTY_DESCRIPTIONS: Record<string, { easy: string; intermediate: string; advanced: string }> = {
+  money_transactions: {
+    easy: 'Recognising coins, notes and values',
+    intermediate: 'Counting, combining and paying',
+    advanced: 'Real-world money decisions',
+  },
+  time_planning: {
+    easy: 'Reading clocks and telling time',
+    intermediate: 'Hours, half hours and schedules',
+    advanced: 'Quarter hours and daily planning',
+  },
+  daily_routine: {
+    easy: 'Morning, meal and bedtime basics',
+    intermediate: 'Building healthy daily habits',
+    advanced: 'Managing your routine independently',
+  },
+  financial_planning: {
+    easy: 'Income, expenses and needs vs wants',
+    intermediate: 'Budgeting and saving strategies',
+    advanced: 'Long-term financial independence',
+  },
+  digital_safety: {
+    easy: 'Passwords, scams and staying safe',
+    intermediate: 'Recognising threats and protecting data',
+    advanced: 'Advanced digital protection',
+  },
+  mobile_money: {
+    easy: 'Sending and receiving M-Pesa',
+    intermediate: 'Paybill, buy goods and statements',
+    advanced: 'Real-world mobile money decisions',
+  },
+  communication_advocacy: {
+    easy: 'Expressing needs and asking for help',
+    intermediate: 'Communicating in different situations',
+    advanced: 'Self-advocacy in the real world',
+  },
+  workplace_readiness: {
+    easy: 'Understanding work basics',
+    intermediate: 'Workplace behaviour and communication',
+    advanced: 'Managing work situations independently',
+  },
+}
+
 const TIER_CONFIG = [
   { tier: 1 as const, label: 'Foundation', sublabel: 'Tier 1' },
   { tier: 2 as const, label: 'Growing',     sublabel: 'Tier 2' },
@@ -209,7 +252,9 @@ export default function SkillDifficultyMap({
                         : key === 'intermediate' ? '#2dd4bf'
                         : '#fbbf24',
                     }}>{label}</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f1f5' }}>{desc}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: '#f0f1f5' }}>
+                      {SKILL_DIFFICULTY_DESCRIPTIONS[skillId]?.[key] ?? desc}
+                    </span>
                     <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
                       {done && <StarRow stars={state.stars} />}
                       {!unlocked && <span style={{ fontSize: 16, color: '#6b7290' }}>🔒</span>}

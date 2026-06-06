@@ -10,6 +10,7 @@ import { TIME_PLANNING_TASKS } from '../tasks/taskData_time'
 import { DAILY_ROUTINE_TASKS } from '../tasks/taskData_routine'
 import { FINANCIAL_PLANNING_TASKS } from '../tasks/taskData_financial'
 import { DIGITAL_SAFETY_TASKS } from '../tasks/taskData_digital'
+import { MOBILE_MONEY_TASKS } from '../tasks/taskData_mobile'
 import { startSession, logAttempt, endSession, getNextSkill, getAdaptation } from './adaptiveClient'
 import TapSelect       from './interactions/TapSelect'
 import TrueFalse       from './interactions/TrueFalse'
@@ -25,6 +26,7 @@ const SKILL_TASK_MAP: Record<string, Task[]> = {
   daily_routine: DAILY_ROUTINE_TASKS,
   financial_planning: FINANCIAL_PLANNING_TASKS,
   digital_safety: DIGITAL_SAFETY_TASKS,
+  mobile_money: MOBILE_MONEY_TASKS,
 }
 
 const SKILL_NAMES: Record<string, string> = {

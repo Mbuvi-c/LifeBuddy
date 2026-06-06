@@ -289,10 +289,10 @@ const SKILLS = [
   { key:"time",      icon:"⏰", name:"Time & Planning",           mastery:72, tier:1, recommended:false, locked:false, desc:"Clocks, schedules & telling time",     tooltip:"Learn to read clocks, plan schedules, and understand time in daily life." },
   { key:"routine",   icon:"📋", name:"Daily Routine",             mastery:88, tier:1, recommended:false, locked:false, desc:"Morning, meals & bedtime sequences",   tooltip:"Arrange daily activities like morning routines and bedtime in the right order." },
   { key:"sorting",   icon:"📊", name:"Financial Planning",        mastery:55, tier:1, recommended:false, locked:false, desc:"Budgeting, saving & planning ahead",   tooltip:"Learn to plan and manage money for everyday needs and future goals." },
-  { key:"digital",   icon:"📱", name:"Digital Safety",            mastery:0,  tier:1, recommended:false, locked:true,  desc:"Coming soon",                         tooltip:"Stay safe online — passwords, scams, and smart digital habits." },
-  { key:"mobile",    icon:"📲", name:"Mobile Money & M-Pesa",     mastery:0,  tier:1, recommended:false, locked:true,  desc:"Coming soon",                         tooltip:"Send, receive and manage money using M-Pesa and mobile banking." },
-  { key:"advocacy",  icon:"🤝", name:"Communication & Advocacy",  mastery:0,  tier:1, recommended:false, locked:true,  desc:"Coming soon",                         tooltip:"Speak up for yourself, ask for help, and communicate your needs clearly." },
-  { key:"workplace", icon:"💼", name:"Workplace Readiness",       mastery:0,  tier:1, recommended:false, locked:true,  desc:"Coming soon",                         tooltip:"Job skills, workplace behaviour, and professional communication." },
+  { key:"digital",   icon:"📱", name:"Digital Safety",            mastery:0,  tier:1, recommended:false, locked:false, desc:"Passwords, scams & staying safe online", tooltip:"Stay safe online — passwords, scams, and smart digital habits." },
+  { key:"mobile",    icon:"📲", name:"Mobile Money & M-Pesa",     mastery:0,  tier:1, recommended:false, locked:false, desc:"Send, receive & manage M-Pesa",        tooltip:"Send, receive and manage money using M-Pesa and mobile banking." },
+  { key:"advocacy",  icon:"🤝", name:"Communication & Advocacy",  mastery:0,  tier:1, recommended:false, locked:true,  desc:"Speak up, ask for help & self-advocate", tooltip:"Speak up for yourself, ask for help, and communicate your needs clearly." },
+  { key:"workplace", icon:"💼", name:"Workplace Readiness",       mastery:0,  tier:1, recommended:false, locked:true,  desc:"Work schedules, instructions & rights",  tooltip:"Job skills, workplace behaviour, and professional communication." },
 ];
 
 // Render a skill's icon — uses HygieneSkillIcon SVG for hygiene, emoji for others
@@ -1560,10 +1560,14 @@ function BridgedSim({ skillKey, onSessionEnd, onGoBack }) {
   );
 }
 const SIM_COMPONENTS = {
-  time:    (props) => <BridgedSim skillKey="time"    {...props} />,
-  sorting: (props) => <BridgedSim skillKey="sorting" {...props} />,
-  routine: (props) => <BridgedSim skillKey="routine" {...props} />,
-  finance: (props) => <BridgedSim skillKey="finance" {...props} />,
+  time:      (props) => <BridgedSim skillKey="time"      {...props} />,
+  sorting:   (props) => <BridgedSim skillKey="sorting"   {...props} />,
+  routine:   (props) => <BridgedSim skillKey="routine"   {...props} />,
+  finance:   (props) => <BridgedSim skillKey="finance"   {...props} />,
+  digital:   (props) => <BridgedSim skillKey="digital"   {...props} />,
+  mobile:    (props) => <BridgedSim skillKey="mobile"    {...props} />,
+  advocacy:  (props) => <BridgedSim skillKey="advocacy"  {...props} />,
+  workplace: (props) => <BridgedSim skillKey="workplace" {...props} />,
 };
 // ─────────────────────────────────────────────
 // APP ROOT

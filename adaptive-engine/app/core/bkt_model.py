@@ -38,7 +38,7 @@ SKILLS = {
     "time_planning":          {"L": 0.15, "T": 0.05, "S": 0.18, "G": 0.35},
     "daily_routine":          {"L": 0.15, "T": 0.05, "S": 0.18, "G": 0.35},
     "digital_safety":         {"L": 0.12, "T": 0.15, "S": 0.10, "G": 0.20},
-    "mobile_money":           {"L": 0.05, "T": 0.10, "S": 0.08, "G": 0.15},
+    "mobile_money":           {"L": 0.15, "T": 0.05, "S": 0.18, "G": 0.35},
     "communication_advocacy": {"L": 0.20, "T": 0.18, "S": 0.10, "G": 0.22},
     "financial_planning":     {"L": 0.05, "T": 0.08, "S": 0.08, "G": 0.12},
     "community_safety":       {"L": 0.10, "T": 0.12, "S": 0.10, "G": 0.18},
