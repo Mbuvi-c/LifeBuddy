@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from 'react'
 import { MONEY_TRANSACTIONS_TASKS } from '../tasks/taskData_money'
 import { TIME_PLANNING_TASKS } from '../tasks/taskData_time'
 import { DAILY_ROUTINE_TASKS } from '../tasks/taskData_routine'
+import { FINANCIAL_PLANNING_TASKS } from '../tasks/taskData_financial'
 import { startSession, logAttempt, endSession, getNextSkill, getAdaptation } from './adaptiveClient'
 import TapSelect       from './interactions/TapSelect'
 import TrueFalse       from './interactions/TrueFalse'
@@ -21,6 +22,7 @@ const SKILL_TASK_MAP: Record<string, Task[]> = {
   money_transactions: MONEY_TRANSACTIONS_TASKS,
   time_planning: TIME_PLANNING_TASKS,
   daily_routine: DAILY_ROUTINE_TASKS,
+  financial_planning: FINANCIAL_PLANNING_TASKS,
 }
 
 const SKILL_NAMES: Record<string, string> = {
