@@ -62,6 +62,8 @@ export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed, sho
     setHintsUsed(h => h + 1)
   }
 
+  const useGrid = task.imageLayout === 'options' && task.options?.some(o => o.image)
+
   return (
     <div style={s.wrap}>
       <style>{`
@@ -69,12 +71,18 @@ export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed, sho
         .pulse-hint { animation: pulseHint 0.8s ease-in-out infinite !important; }
       `}</style>
       
+      {/* Question image */}
+      {task.questionImage && task.imageLayout === 'context' && (
+        <div style={{ width: '100%', borderRadius: 12, overflow: 'hidden', marginBottom: 12, maxHeight: 200 }}>
+          <img src={`/images/tasks/${task.questionImage}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        </div>
+      )}
       {/* Question */}
       <div style={s.question}>{task.question}</div>
       {task.context && <div style={s.context}>{task.context}</div>}
 
       {/* Options */}
-      <div style={s.options}>
+      <div style={useGrid ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' } : s.options}>
         {task.options?.map(option => {
           const isSelected = selected === option.id
           const isCorrect  = option.correct
@@ -96,8 +104,17 @@ export default function TapSelect({ task, learnerId, onAnswer, hintsAllowed, sho
               onClick={() => handleSelect(option.id)}
               disabled={revealed}
             >
-              <span style={s.optionDot(isSelected, revealed, isCorrect)} />
-              <span style={s.optionLabel}>{option.label}</span>
+              {option.image && task.imageLayout === 'options' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%' }}>
+                  <img src={`/images/tasks/${option.image}`} alt={option.label} style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 8 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  <span style={{ fontSize: 12, color: 'inherit', textAlign: 'center' }}>{option.label}</span>
+                </div>
+              ) : (
+                <>
+                  <span style={s.optionDot(isSelected, revealed, isCorrect)} />
+                  <span style={s.optionLabel}>{option.label}</span>
+                </>
+              )}
               {revealed && isSelected && (
                 <span style={s.verdict}>{isCorrect ? '✓' : '✗'}</span>
               )}

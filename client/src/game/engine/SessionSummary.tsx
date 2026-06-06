@@ -31,6 +31,8 @@ interface SessionSummaryProps {
   onContinue: () => void
   onOptionalChallenge: () => void
   onHome: () => void
+  onBackToSkill?: () => void
+  difficulty?: 'easy' | 'intermediate' | 'advanced'
 }
 
 const TIER_NAMES: Record<number, string> = {
@@ -77,6 +79,8 @@ export default function SessionSummary({
   onContinue,
   onOptionalChallenge,
   onHome,
+  onBackToSkill,
+  difficulty,
 }: SessionSummaryProps) {
   const [barWidth, setBarWidth]             = useState(previousMastery * 100)
   const [showStats, setShowStats]           = useState(false)
@@ -233,9 +237,11 @@ export default function SessionSummary({
                 </div>
               ))}
             </div>
-            <div style={s.weakNote}>
-              Your caregiver has been notified to help you practise these.
-            </div>
+            {false && (
+              <div style={s.weakNote}>
+                Your caregiver has been notified to help you practise these.
+              </div>
+            )}
           </div>
         )}
 
@@ -280,13 +286,29 @@ export default function SessionSummary({
 
         {/* ── Nav buttons ── */}
         {(!showChallenge || challengeDecided) && (
-          <div style={s.navRow}>
-            <button style={s.homeBtn} onClick={onHome}>
-              Home
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 24px 40px', width: '100%', maxWidth: 400, margin: '0 auto' }}>
+            <button
+              style={{ ...s.continueBtn }}
+              onClick={onBackToSkill ?? onHome}
+            >
+              ← Back to Skill
             </button>
-            <button style={s.continueBtn} onClick={onContinue}>
-              {tierCompleted === 3 ? 'Next Skill' : 'Next Tier'} →
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                style={{ ...s.homeBtn, flex: 1 }}
+                onClick={onContinue}
+              >
+                Play Again
+              </button>
+              {tierCompleted === 3 && difficulty === 'advanced' && (
+                <button
+                  style={{ ...s.continueBtn, flex: 1 }}
+                  onClick={onHome}
+                >
+                  Next Skill →
+                </button>
+              )}
+            </div>
           </div>
         )}
 

@@ -15,13 +15,15 @@ export type Task = {
   topic: string
   question: string
   context?: string
-  options?: { id: string; label: string; correct: boolean }[]
+  options?: { id: string; label: string; correct: boolean; image?: string }[]
   steps?: { id: string; label: string; order: number }[]
   dragItems?: { id: string; label: string; targetZone: string }[]
   dropZones?: { id: string; label: string }[]
   hint: string
   explanation: string
   image?: string
+  questionImage?: string
+  imageLayout?: 'context' | 'options'
 }
 
 
@@ -38,22 +40,25 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
   {
     id: 'mt_t1_easy_1',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
-    type: 'tap_select', topic: 'identifying coins',
+    type: 'tap_select', topic: 'KES coins',
     question: 'Which coin is worth KES 20?',
-    context: 'Three coins are shown. Tap the one worth KES 20.',
+    context: 'Tap the coin worth KES 20.',
+    imageLayout: 'options',
     options: [
-      { id: 'a', label: 'KES 5 — small silver coin', correct: false },
-      { id: 'b', label: 'KES 20 — large gold coin', correct: true },
-      { id: 'c', label: 'KES 1 — very small coin', correct: false },
+      { id: 'a', label: 'KES 5',  image: 'coin_5.jpg',  correct: false },
+      { id: 'b', label: 'KES 20', image: 'coin_20.jpg', correct: true },
+      { id: 'c', label: 'KES 1',  image: 'coin_1.jpg',  correct: false },
+      { id: 'd', label: 'KES 10', image: 'coin_10.jpg', correct: false },
     ],
     hint: 'The KES 20 coin is gold coloured and larger than the others.',
-    explanation: 'The KES 20 coin is gold coloured and the largest of the small coins. Learning to tell coins apart by size and colour is essential.',
-    image: 'coin_kes20.png',
+    explanation: 'The KES 20 coin is gold coloured and the largest of the small coins.',
   },
   {
     id: 'mt_t1_easy_2',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'true_false', topic: 'identifying notes',
+    questionImage: 'note_100_vs_50.jpg',
+    imageLayout: 'context',
     question: 'A KES 100 note is worth more than a KES 50 note.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -67,20 +72,23 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'tap_select', topic: 'identifying coins',
     question: 'Which of these is the smallest coin in Kenya?',
+    questionImage: 'coins_size_comparison.jpg',
+    imageLayout: 'options',
     options: [
-      { id: 'a', label: 'KES 50', correct: false },
-      { id: 'b', label: 'KES 10', correct: false },
-      { id: 'c', label: 'KES 1', correct: true },
-      { id: 'd', label: 'KES 20', correct: false },
+      { id: 'a', label: 'KES 5',  image: 'coin_5.jpg',  correct: false },
+      { id: 'b', label: 'KES 10', image: 'coin_10.jpg', correct: false },
+      { id: 'c', label: 'KES 1',  image: 'coin_1.jpg',  correct: true },
+      { id: 'd', label: 'KES 20', image: 'coin_20.jpg', correct: false },
     ],
     hint: 'The smallest coin has the smallest value.',
     explanation: 'KES 1 is the smallest coin in Kenya. It is very small and silver coloured.',
-    image: 'coins_size_comparison.png',
   },
   {
     id: 'mt_t1_easy_4',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'true_false', topic: 'identifying notes',
+    questionImage: 'note_1000.jpg',
+    imageLayout: 'context',
     question: 'Kenya has a KES 1,000 note.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -93,12 +101,13 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t1_easy_5',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'tap_select', topic: 'KES notes',
+    imageLayout: 'options',
     question: 'Which is the highest value note in Kenya?',
     options: [
-      { id: 'a', label: 'KES 500', correct: false },
-      { id: 'b', label: 'KES 200', correct: false },
-      { id: 'c', label: 'KES 1,000', correct: true },
-      { id: 'd', label: 'KES 100', correct: false },
+      { id: 'a', label: 'KES 500',   image: 'note_500.png',  correct: false },
+      { id: 'b', label: 'KES 200',   image: 'note_200.jpg',  correct: false },
+      { id: 'c', label: 'KES 1,000', image: 'note_1000.jpg', correct: true },
+      { id: 'd', label: 'KES 100',   image: 'note_100.jpg',  correct: false },
     ],
     hint: 'The biggest number is the highest value.',
     explanation: 'KES 1,000 is the highest value note in Kenya. It is brown and used for large purchases.',
@@ -107,6 +116,8 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t1_easy_6',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'true_false', topic: 'identifying coins',
+    questionImage: 'coin_40.jpg',
+    imageLayout: 'context',
     question: 'Kenya has a coin worth KES 40.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -114,18 +125,19 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     ],
     hint: 'Think about the less common coins in Kenya — there is one worth KES 40.',
     explanation: 'Kenya has coins worth KES 1, 5, 10, 20, and 40. The KES 40 coin is less commonly used but is legal tender.',
-    image: 'coin_kes40.png',
+    image: 'coin_40.jpg',
   },
   {
     id: 'mt_t1_easy_7',
     skill: 'money_transactions', tier: 1, difficulty: 'easy',
     type: 'tap_select', topic: 'identifying notes',
+    imageLayout: 'options',
     question: 'You have a green note. Which note is it most likely to be?',
     options: [
-      { id: 'a', label: 'KES 50', correct: false },
-      { id: 'b', label: 'KES 500', correct: true },
-      { id: 'c', label: 'KES 1,000', correct: false },
-      { id: 'd', label: 'KES 200', correct: false },
+      { id: 'a', label: 'KES 50',    image: 'note_50.jpg',   correct: false },
+      { id: 'b', label: 'KES 500',   image: 'note_500.png',  correct: true },
+      { id: 'c', label: 'KES 1,000', image: 'note_1000.jpg', correct: false },
+      { id: 'd', label: 'KES 200',   image: 'note_200.jpg',  correct: false },
     ],
     hint: 'Each Kenyan note has a unique colour. The green note is a high value one.',
     explanation: 'The KES 1,000 is brown, KES 500 note is green, KES 200 is blue , KES 100 is purple and KES 50 is reddish.',
@@ -349,6 +361,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_1',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy a soda for KES 50. You give KES 100. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 40', correct: false },
@@ -362,6 +375,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_2',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy bread for KES 60 and give KES 100. The shopkeeper gives you KES 30 back. What should you do?',
     options: [
       { id: 'a', label: 'Say nothing — it is probably correct', correct: false },
@@ -375,6 +389,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_3',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'A pen costs KES 20. You give KES 50. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 20', correct: false },
@@ -388,6 +403,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_4',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'true_false', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'counting_intro.jpg',
     question: 'You should count your change before leaving the shop.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -400,11 +416,12 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_5',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'tap_select', topic: 'paying for items',
+    imageLayout: 'options',
     question: 'Milk costs KES 55. Which is the best note to use if you only have one note?',
     options: [
-      { id: 'a', label: 'KES 50 note', correct: false },
-      { id: 'b', label: 'KES 100 note', correct: true },
-      { id: 'c', label: 'KES 500 note', correct: false },
+      { id: 'a', label: 'KES 50 note',  image: 'note_50.jpg',  correct: false },
+      { id: 'b', label: 'KES 100 note', image: 'note_100.jpg', correct: true },
+      { id: 'c', label: 'KES 500 note', image: 'note_500.png', correct: false },
     ],
     hint: 'Use the note closest to the price that is still enough.',
     explanation: 'KES 100 is the closest note above KES 55. Using KES 500 would work but gives unnecessary large change.',
@@ -413,6 +430,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_6',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'scenario_choice', topic: 'paying for items',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You are at the duka. Sugar costs KES 120. You have a KES 200 note. How much change should you receive?',
     options: [
       { id: 'a', label: 'KES 70', correct: false },
@@ -427,6 +445,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_easy_7',
     skill: 'money_transactions', tier: 2, difficulty: 'easy',
     type: 'true_false', topic: 'paying for items',
+    imageLayout: 'context', questionImage: 'total_200.png',
     question: 'If something costs KES 75 and you give KES 100, your change is KES 35.',
     options: [
       { id: 'true', label: 'True', correct: false },
@@ -442,6 +461,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_1',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You buy milk for KES 75 and sugar for KES 120. You pay with KES 200. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 5', correct: true },
@@ -455,6 +475,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_2',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'drag_drop', topic: 'making a shopping list',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'You have KES 300. Sort these items into what you can afford and what you cannot — buying all affordable items together.',
     context: 'Bread KES 50, Milk KES 70, Cooking oil KES 200, Biscuits KES 120, Sugar KES 130.',
     dragItems: [
@@ -475,6 +496,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_3',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy three items: KES 30, KES 45, KES 25. You pay KES 200. The shopkeeper gives you KES 90 change. Is this correct?',
     options: [
       { id: 'a', label: 'Yes — KES 90 is correct', correct: false },
@@ -488,6 +510,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_4',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You buy airtime for KES 50 and a snack for KES 35. You pay KES 100. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 10', correct: false },
@@ -501,6 +524,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_5',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'true_false', topic: 'making a shopping list',
+    imageLayout: 'context', questionImage: 'total_200.png',
     question: 'If your shopping list totals KES 480 and you have KES 500, you have enough money.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -513,6 +537,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_6',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'scenario_choice', topic: 'paying for items',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You want to buy bread (KES 50), eggs (KES 90), and milk (KES 70). You have KES 200. Can you buy all three?',
     options: [
       { id: 'a', label: 'Yes — and you will have KES 10 left over', correct: false },
@@ -526,6 +551,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_int_7',
     skill: 'money_transactions', tier: 2, difficulty: 'intermediate',
     type: 'sequential_steps', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'counting_intro.jpg',
     question: 'Put these steps in the correct order for checking your change is correct.',
     steps: [
       { id: 's1', label: 'Note the price of your item before paying',             order: 1 },
@@ -544,6 +570,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_1',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'You have KES 500 for the week. You spend KES 180 on food, KES 90 on transport, and KES 150 on airtime. Is there enough left for an emergency expense of KES 100?',
     options: [
       { id: 'a', label: 'Yes — KES 180 left, more than enough', correct: false },
@@ -557,6 +584,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_2',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'impulse buying',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You are at the market with KES 400 to buy items totalling KES 350. You see nice biscuits for KES 80. What is the best decision?',
     options: [
       { id: 'a', label: 'Buy them — you still have KES 50 after your list', correct: false },
@@ -571,6 +599,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_3',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You buy: rice KES 180, beans KES 90, tomatoes KES 40. You pay with KES 500. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 180', correct: false },
@@ -584,6 +613,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_4',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'keeping money safe',
+    imageLayout: 'context', questionImage: 'overpay_intro.png',
     question: 'You sell some items at the market and receive KES 2,500 in cash. What is the safest thing to do with the money immediately?',
     options: [
       { id: 'a', label: 'Count it loudly at the market stall so customers can see you are doing well', correct: false },
@@ -619,6 +649,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_6',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'true_false', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'If you spend KES 150 on Monday, KES 200 on Tuesday, and KES 180 on Wednesday, and your weekly budget is KES 600, you have overspent.',
     options: [
       { id: 'true', label: 'True', correct: false },
@@ -631,6 +662,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t2_adv_7',
     skill: 'money_transactions', tier: 2, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy four items totalling KES 385. You pay with a KES 500 note. The shopkeeper gives you two KES 50 notes as change. Is this correct?',
     options: [
       { id: 'a', label: 'Yes — two KES 50 notes is KES 100, which is correct', correct: false },
@@ -652,6 +684,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_1',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'sequential_steps', topic: 'paying for items',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'Put these steps in the correct order for buying something at a shop.',
     steps: [
       { id: 's1', label: 'Check the price of the item',            order: 1 },
@@ -667,6 +700,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_2',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'scenario_choice', topic: 'keeping money safe',
+    imageLayout: 'context', questionImage: 'overpay_intro.png',
     question: 'You are at a crowded matatu stage and need to pay your fare of KES 50. What is the safest way?',
     context: 'You have KES 500 in your pocket.',
     options: [
@@ -681,6 +715,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_3',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy a pen for KES 30 and give KES 100. The shopkeeper gives you KES 60. Before you leave, you count it. What do you notice?',
     options: [
       { id: 'a', label: 'KES 60 is correct — no problem', correct: false },
@@ -694,6 +729,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_4',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'true_false', topic: 'paying for items',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'If you do not have the exact change, it is fine to give more money and receive change back.',
     options: [
       { id: 'true', label: 'True', correct: true },
@@ -706,6 +742,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_5',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'tap_select', topic: 'making a shopping list',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You have KES 150. You need bread (KES 50) and milk (KES 80). After buying both, how much do you have left?',
     options: [
       { id: 'a', label: 'KES 10', correct: false },
@@ -719,6 +756,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_6',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'scenario_choice', topic: 'impulse buying',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You go to buy only bread (KES 50) with KES 100. At the counter you see sweets for KES 30. You buy them too. How much change do you get?',
     options: [
       { id: 'a', label: 'KES 50', correct: false },
@@ -732,6 +770,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_easy_7',
     skill: 'money_transactions', tier: 3, difficulty: 'easy',
     type: 'fill_blank', topic: 'calculating change',
+    imageLayout: 'context', questionImage: 'counting_intro.jpg',
     question: 'You buy three items costing KES 20, KES 35, and KES 15. You pay KES 100. Your change is KES ___.',
     options: [
       { id: 'a', label: 'KES 20', correct: false },
@@ -748,6 +787,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_1',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'scenario_choice', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'Your aunt gives you KES 800 for the week. You need: school lunch KES 300, bus fare KES 200, airtime KES 100. You want to save KES 50. How much spending money do you have left?',
     options: [
       { id: 'a', label: 'KES 100', correct: false },
@@ -762,6 +802,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_2',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'drag_drop', topic: 'making a shopping list',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'You have KES 1,000 for the week. Sort each expense into Essential or Non-Essential.',
     dragItems: [
       { id: 'e1', label: 'Unga (flour) KES 180',     targetZone: 'essential' },
@@ -783,6 +824,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_3',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy groceries worth KES 645. You pay with a KES 500 note and a KES 200 note. How much change should you receive?',
     options: [
       { id: 'a', label: 'KES 45', correct: false },
@@ -796,6 +838,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_4',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'sequential_steps', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'Put these steps in the correct order for planning your weekly spending.',
     steps: [
       { id: 's1', label: 'Write down how much money you have for the week',     order: 1 },
@@ -812,6 +855,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_5',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'fill_blank', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'total_200.png',
     question: 'You have KES 1,200. You spend KES 400 on food, KES 150 on transport, and KES 200 on school materials. You have KES ___ left.',
     options: [
       { id: 'a', label: 'KES 350', correct: false },
@@ -825,6 +869,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_6',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'scenario_choice', topic: 'impulse buying',
+    imageLayout: 'context', questionImage: 'items_three.png',
     question: 'You go shopping with exactly KES 500 for a list of items totalling KES 480. At the checkout you see a magazine for KES 50. What should you do?',
     options: [
       { id: 'a', label: 'Buy it — you are close enough and can borrow KES 30', correct: false },
@@ -838,6 +883,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_int_7',
     skill: 'money_transactions', tier: 3, difficulty: 'intermediate',
     type: 'true_false', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'wallet_200_yes.png',
     question: 'Saving money should only happen after you have bought everything you want.',
     options: [
       { id: 'true', label: 'True', correct: false },
@@ -853,6 +899,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_1',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy: rice KES 400, oil KES 350, sugar KES 200, milk KES 300, bread KES 150. The shopkeeper says your total is KES 1,500 and gives you KES 400 change from KES 2,000. Is everything correct?',
     options: [
       { id: 'a', label: 'Yes — everything is correct', correct: false },
@@ -868,6 +915,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_2',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'sequential_steps', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'Your parent gives you KES 1,000 for the week. Put these financial steps in the correct order.',
     steps: [
       { id: 's1', label: 'Set aside bus fare for the whole week — KES 200',          order: 1 },
@@ -883,6 +931,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_3',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'keeping money safe',
+    imageLayout: 'context', questionImage: 'overpay_intro.png',
     question: 'You collect KES 3,500 from selling items. On your way home you pass a busy shopping area. What is the safest set of actions?',
     options: [
       { id: 'a', label: 'Count the money publicly to make sure it is all there, then put it in your bag', correct: false },
@@ -897,6 +946,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_4',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'fill_blank', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'total_200.png',
     question: 'You earn KES 2,500 this month from odd jobs. You spend KES 800 on food, KES 400 on transport, KES 300 on airtime, and save KES 200. You have KES ___ left for other spending.',
     options: [
       { id: 'a', label: 'KES 700', correct: false },
@@ -910,6 +960,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_5',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'receiving change',
+    imageLayout: 'context', questionImage: 'shop_counter.jpg',
     question: 'You buy 5 items totalling KES 1,275. You pay with a KES 1,000 note and a KES 500 note. The shopkeeper gives you KES 200 change. Is this correct?',
     options: [
       { id: 'a', label: 'Yes — KES 200 is correct', correct: false },
@@ -923,6 +974,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_6',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'drag_drop', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'shopping_list.png',
     question: 'You have KES 2,000 for the month. Sort these into Must Pay This Month and Can Wait Until Next Month.',
     dragItems: [
       { id: 'm1', label: 'Rent contribution KES 800',       targetZone: 'must' },
@@ -943,6 +995,7 @@ export const MONEY_TRANSACTIONS_TASKS: Task[] = [
     id: 'mt_t3_adv_7',
     skill: 'money_transactions', tier: 3, difficulty: 'advanced',
     type: 'scenario_choice', topic: 'budgeting',
+    imageLayout: 'context', questionImage: 'wallet_150_no.png',
     question: 'At the end of the month you have KES 150 left. You were planning to save KES 200. What is the best decision?',
     options: [
       { id: 'a', label: 'Save KES 150 — something is better than nothing', correct: true },

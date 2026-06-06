@@ -1,6 +1,8 @@
 import SimulationEngine from './game/engine/SimulationEngineV2';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createLearner } from './game/engine/adaptiveClient';
+import SkillDifficultyMap, { savePracticeResult } from './game/learn/SkillDifficultyMap';
+import SimulationEngineV2 from './game/engine/SimulationEngineV2';
 
 // ─────────────────────────────────────────────
 // VOICE HELPER — human-like speech
@@ -1496,10 +1498,21 @@ function SimHygiene({ tier, onTaskComplete, onSessionEnd, taskCount, settings, o
   );
 }
 
+const SKILL_META = {
+  finance:   { name: 'Money & Transactions',       icon: '💰', desc: 'Coins, notes & M-Pesa payments' },
+  time:      { name: 'Time & Planning',             icon: '⏰', desc: 'Clocks, schedules & telling time' },
+  routine:   { name: 'Daily Routine',               icon: '📋', desc: 'Morning, meals & bedtime sequences' },
+  sorting:   { name: 'Financial Planning',          icon: '📊', desc: 'Budgeting, saving & planning ahead' },
+  digital:   { name: 'Digital Safety',              icon: '📱', desc: 'Passwords, scams & safe phone use' },
+  mobile:    { name: 'Mobile Money & M-Pesa',       icon: '📲', desc: 'Send, receive & manage M-Pesa' },
+  advocacy:  { name: 'Communication & Advocacy',    icon: '🤝', desc: 'Speak up, ask for help & self-advocate' },
+  workplace: { name: 'Workplace Readiness',         icon: '💼', desc: 'Work schedules, instructions & rights' },
+};
+
 const SKILL_ID_MAP = {
   finance:   "money_transactions",
   time:      "time_planning",
-  routine:   "time_planning",
+  routine:   "daily_routine",
   sorting:   "financial_planning",
   digital:   "digital_safety",
   mobile:    "mobile_money",
@@ -1508,16 +1521,41 @@ const SKILL_ID_MAP = {
 };
 
 
-function BridgedSim({ skillKey, tier, onTaskComplete, onSessionEnd, taskCount, settings, onGoBack }) {
-  const skillId = SKILL_ID_MAP[skillKey] || "money_transactions";
+function BridgedSim({ skillKey, onSessionEnd, onGoBack }) {
+  const [activeDifficulty, setActiveDifficulty] = useState(null);
+  const [activeTier, setActiveTier] = useState(1);
+  const skillId = SKILL_ID_MAP[skillKey] || 'money_transactions';
+  const meta = SKILL_META[skillKey] || { name: skillKey, icon: '📚', desc: '' };
+
+  if (activeDifficulty) {
+    return (
+      <SimulationEngineV2
+        skillId={skillId}
+        learnerId="8312fa0c-9b5f-46d6-94df-40552fc6cc7c"
+        tier={activeTier}
+        initialDifficulty={activeDifficulty}
+        onSessionComplete={(result) => {
+          console.log('Session complete. skillId:', skillId, 'difficulty:', activeDifficulty, 'stars:', (result?.mastery ?? 0) >= 0.85 ? 3 : (result?.mastery ?? 0) >= 0.5 ? 2 : 1);
+          const stars = (result?.mastery ?? 0) >= 0.85 ? 3 : (result?.mastery ?? 0) >= 0.5 ? 2 : 1;
+          savePracticeResult(skillId, activeDifficulty, stars);
+          setActiveDifficulty(null);
+          if (result?.passed) onSessionEnd(result);
+        }}
+        onGoBack={() => setActiveDifficulty(null)}
+        onBackToSkill={() => setActiveDifficulty(null)}
+      />
+    );
+  }
+
   return (
-    <SimulationEngine
+    <SkillDifficultyMap
       skillId={skillId}
+      skillName={meta.name}
+      skillIcon={meta.icon}
+      skillDesc={meta.desc}
       learnerId="8312fa0c-9b5f-46d6-94df-40552fc6cc7c"
-      tier={tier || 1}
-      onSessionComplete={onSessionEnd}
+      onStartPractice={(difficulty, tier) => { setActiveDifficulty(difficulty); setActiveTier(tier); }}
       onGoBack={onGoBack}
-      settings={settings}
     />
   );
 }
@@ -2753,7 +2791,7 @@ function Simulations({ nav, tierData, setActiveSkill, settings }) {
 // ─────────────────────────────────────────────
 function GameScreen({ nav, skill, tierData, setSessionResult, settings }) {
   const skillData   = skill || SKILLS[0];
-  const SimComp     = SIM_COMPONENTS[skillData.key] || SimTime;
+  const SimComp     = SIM_COMPONENTS[skillData.key] || SIM_COMPONENTS['finance'];
   const TASK_COUNT  = 4;
   const [tasksDone, setTasksDone]   = useState(0);
   const [paused, setPaused]         = useState(false);

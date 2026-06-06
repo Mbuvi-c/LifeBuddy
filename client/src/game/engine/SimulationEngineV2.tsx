@@ -6,6 +6,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { MONEY_TRANSACTIONS_TASKS } from '../tasks/taskData_money'
+import { TIME_PLANNING_TASKS } from '../tasks/taskData_time'
+import { DAILY_ROUTINE_TASKS } from '../tasks/taskData_routine'
 import { startSession, logAttempt, endSession, getNextSkill, getAdaptation } from './adaptiveClient'
 import TapSelect       from './interactions/TapSelect'
 import TrueFalse       from './interactions/TrueFalse'
@@ -17,6 +19,8 @@ import type { Task }   from '../tasks/types'
 
 const SKILL_TASK_MAP: Record<string, Task[]> = {
   money_transactions: MONEY_TRANSACTIONS_TASKS,
+  time_planning: TIME_PLANNING_TASKS,
+  daily_routine: DAILY_ROUTINE_TASKS,
 }
 
 const SKILL_NAMES: Record<string, string> = {
@@ -69,9 +73,9 @@ interface DifficultyReport {
 }
 
 interface SimulationEngineV2Props {
-  skillId: string; learnerId: string; tier?: 1|2|3
+  skillId: string; learnerId: string; tier?: 1|2|3; initialDifficulty?: Difficulty
   onSessionComplete?: (result: { passed: boolean; mastery: number }) => void
-  onGoBack?: () => void; settings?: Record<string, unknown>
+  onGoBack?: () => void; onBackToSkill?: () => void; settings?: Record<string, unknown>
 }
 
 function getTasksForDifficulty(tasks: Task[], tier: 1|2|3, difficulty: Difficulty, excludeIds: string[]): Task[] {
@@ -415,9 +419,9 @@ function SkillRecommendationPopup({ recommendedSkill, hasTaskData, onAccept, onD
 }
 
 // ── Session Summary ───────────────────────────────────────────────────────────
-function SessionSummaryScreen({ skillName, reports, sessionMastery, overallMastery, onPlayAgain, onTryAnother, recommendedSkill, hasTaskData, onAcceptRecommendation }: {
+function SessionSummaryScreen({ skillName, reports, sessionMastery, overallMastery, onPlayAgain, onTryAnother, onBackToSkill, recommendedSkill, hasTaskData, onAcceptRecommendation }: {
   skillName: string; reports: DifficultyReport[]; sessionMastery: number; overallMastery: number
-  onPlayAgain: () => void; onTryAnother: () => void
+  onPlayAgain: () => void; onTryAnother: () => void; onBackToSkill?: () => void
   recommendedSkill: string; hasTaskData: boolean; onAcceptRecommendation: () => void
 }) {
   const [devMode, setDevMode] = useState(false)
@@ -475,9 +479,11 @@ function SessionSummaryScreen({ skillName, reports, sessionMastery, overallMaste
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onPlayAgain} style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: '#f0f1f5', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Play Again</button>
-              <button onClick={onTryAnother} style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Try Another</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button onClick={onBackToSkill ?? onTryAnother} style={{ width: '100%', padding: '14px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>← Back to Skill</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={onPlayAgain} style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: '#f0f1f5', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Play Again</button>
+              </div>
             </div>
           </div>
         </>
@@ -657,45 +663,17 @@ function FeedbackPanel({ correct, explanation, isLast, onNext }: { correct: bool
 function QuitConfirm({ onStay, onQuit, tier, difficulty }: {
   onStay: () => void; onQuit: () => void; tier: 1|2|3; difficulty: Difficulty
 }) {
-  const [showSaved, setShowSaved] = useState(false)
-
-  function handleQuit() {
-    setShowSaved(true)
-    setTimeout(() => onQuit(), 7000)
-  }
-
-  if (showSaved) return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#1e2130', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '32px 28px', width: 340, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
-        <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f1f5', marginBottom: 10 }}>Good effort today!</p>
-        <div style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 12, padding: '14px 16px', marginBottom: 14, textAlign: 'left' }}>
-          <p style={{ fontSize: 12, color: '#4ade80', fontWeight: 600, marginBottom: 6 }}>📍 Progress saved</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
-            You reached <strong style={{ color: '#f0f1f5' }}>Level {tier} · {DIFFICULTY_LABEL[difficulty]}</strong>. We'll pick up from here next time.
-          </p>
-        </div>
-        <div style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
-          <p style={{ fontSize: 12, color: '#c084fc', fontWeight: 600, marginBottom: 6 }}>🔄 Fresh start on mastery</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
-            To keep your scores accurate, mastery will refresh next session. Half of what you earned today carries forward!
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#1e2130', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '32px 28px', width: 320, textAlign: 'center' }}>
         <div style={{ fontSize: 36, marginBottom: 12 }}>⏸️</div>
         <p style={{ fontSize: 18, fontWeight: 700, color: '#f0f1f5', marginBottom: 8 }}>Take a break?</p>
         <p style={{ fontSize: 13, color: '#9da3b8', marginBottom: 24, lineHeight: 1.5 }}>
-          Your progress will be saved. Mastery will refresh next session so your scores stay accurate.
+          Your progress will be saved. We will pick up from here next time.
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onStay} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#f0f1f5', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Keep going</button>
-          <button onClick={handleQuit} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Save & quit</button>
+          <button onClick={onQuit} style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: 'none', background: '#6c63ff', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Save & quit</button>
         </div>
       </div>
     </div>
@@ -703,20 +681,21 @@ function QuitConfirm({ onStay, onQuit, tier, difficulty }: {
 }
 
 // ── Main engine ───────────────────────────────────────────────────────────────
-export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSessionComplete, onGoBack }: SimulationEngineV2Props) {
+export default function SimulationEngineV2({ skillId, learnerId, tier = 1, initialDifficulty, onSessionComplete, onGoBack }: SimulationEngineV2Props) {
   const resolvedLearnerId = localStorage.getItem('lifebuddy_learner_id') || learnerId
 
   const allTasks  = SKILL_TASK_MAP[skillId] ?? MONEY_TRANSACTIONS_TASKS
   const skillName = SKILL_NAMES[skillId] ?? skillId
 
   const [currentTier, setCurrentTier]   = useState<1|2|3>(tier)
-  const [currentDiff, setCurrentDiff]   = useState<Difficulty>('easy')
+  const [currentDiff, setCurrentDiff]   = useState<Difficulty>(initialDifficulty ?? 'easy')
   const [phase,       setPhase]         = useState<Phase>('playing')
   const [taskQueue,   setTaskQueue]     = useState<Task[]>([])
   const [taskIndex,   setTaskIndex]     = useState(0)
   const [doneIds,     setDoneIds]       = useState<string[]>([])
   const [answers,     setAnswers]       = useState<AnswerRecord[]>([])
   const [showQuit,    setShowQuit]      = useState(false)
+  const [quitSaving,  setQuitSaving]    = useState(false)
   const [feedback,    setFeedback]      = useState<{ correct: boolean; mastery: number } | null>(null)
   const [logging,     setLogging]       = useState(false)
   const [consecutiveWrong, setConsecutiveWrong] = useState(0)
@@ -856,10 +835,8 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
 
     if (phase === 'playing') {
       if (passed) {
-        const next = nextDifficultyOrTier(currentTier, currentDiff)
         setDifficultyReports(prev => [...prev, report])
         setCurrentReport(report)
-        setNextTransition(next)
         setShowProgressReport(true)
       } else {
         originalAnswers.current = [...mainAnswers.current]
@@ -876,10 +853,8 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
       const remediationReport = buildReport(originalAnswers.current, currentTier, currentDiff, passed, avgMastery, true)
       setDifficultyReports(prev => [...prev, remediationReport])
       setShowGentleBanner(true)
-      const next = nextDifficultyOrTier(currentTier, currentDiff)
       setTimeout(() => {
         setShowGentleBanner(false)
-        setNextTransition(next)
         setCurrentReport(remediationReport)
         setShowProgressReport(true)
       }, 3500)
@@ -942,6 +917,7 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
         sessionMastery={sessionMastery} overallMastery={overallMastery}
         onPlayAgain={() => { setShowSummary(false); setAnswers([]); sessionAnswers.current = []; mainAnswers.current = []; setDifficultyReports([]); setPhase('playing'); loadQueue(1,'easy',[]) }}
         onTryAnother={() => onGoBack?.()}
+        onBackToSkill={() => onGoBack?.()}
         recommendedSkill={recommendedSkill}
         hasTaskData={!!SKILL_TASK_MAP[recommendedSkill]}
         onAcceptRecommendation={() => onGoBack?.()}
@@ -969,8 +945,25 @@ export default function SimulationEngineV2({ skillId, learnerId, tier = 1, onSes
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0b0f', display: 'flex', flexDirection: 'column' }}>
-      {showQuit && <QuitConfirm onStay={() => setShowQuit(false)} onQuit={() => { setShowQuit(false); onGoBack?.() }} tier={currentTier} difficulty={currentDiff} />}
+    <div style={{ minHeight: '100vh', background: '#0a0b0f', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      {quitSaving && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 100,
+          background: 'var(--bg, #0e0f1a)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 20,
+        }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            border: '3px solid rgba(255,255,255,0.1)',
+            borderTop: '3px solid #7c6ffa',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <div style={{ fontSize: 15, color: '#9da3b8' }}>Saving your progress…</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+      {showQuit && <QuitConfirm onStay={() => setShowQuit(false)} onQuit={() => { setShowQuit(false); setQuitSaving(true); setTimeout(() => { onGoBack?.(); }, 3000); }} tier={currentTier} difficulty={currentDiff} />}
       {feedback && currentTask && <FeedbackPanel correct={feedback.correct} explanation={currentTask.explanation} isLast={isLast} onNext={handleNext} />}
       {showCelebration && <CelebrationPopup onContinue={handleCelebrationDone} nextLabel={nextTransition ? `Starting ${DIFFICULTY_LABEL[nextTransition.diff]}!` : 'Session complete!'} />}
       {showTransition && nextTransition && <TransitionScreen tier={nextTransition.tier} difficulty={nextTransition.diff} onReady={handleTransitionDone} />}

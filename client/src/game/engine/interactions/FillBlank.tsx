@@ -11,7 +11,7 @@ interface FillBlankProps {
   task: Task
   learnerId: string
   onAnswer: (correct: boolean, responseTime: number, hintsUsed: number) => void
-  hintsAllowed: boolean
+  hintsAllowed: boolean1
   showHint?: boolean
 }
 
