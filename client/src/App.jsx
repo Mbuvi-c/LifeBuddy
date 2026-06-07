@@ -291,7 +291,7 @@ const SKILLS = [
   { key:"sorting",   icon:"📊", name:"Financial Planning",        mastery:55, tier:1, recommended:false, locked:false, desc:"Budgeting, saving & planning ahead",   tooltip:"Learn to plan and manage money for everyday needs and future goals." },
   { key:"digital",   icon:"📱", name:"Digital Safety",            mastery:0,  tier:1, recommended:false, locked:false, desc:"Passwords, scams & staying safe online", tooltip:"Stay safe online — passwords, scams, and smart digital habits." },
   { key:"mobile",    icon:"📲", name:"Mobile Money & M-Pesa",     mastery:0,  tier:1, recommended:false, locked:false, desc:"Send, receive & manage M-Pesa",        tooltip:"Send, receive and manage money using M-Pesa and mobile banking." },
-  { key:"advocacy",  icon:"🤝", name:"Communication & Advocacy",  mastery:0,  tier:1, recommended:false, locked:true,  desc:"Speak up, ask for help & self-advocate", tooltip:"Speak up for yourself, ask for help, and communicate your needs clearly." },
+  { key:"advocacy",  icon:"🤝", name:"Communication & Advocacy",  mastery:0,  tier:1, recommended:false, locked:false, desc:"Speak up, ask for help & self-advocate", tooltip:"Speak up for yourself, ask for help, and communicate your needs clearly." },
   { key:"workplace", icon:"💼", name:"Workplace Readiness",       mastery:0,  tier:1, recommended:false, locked:true,  desc:"Work schedules, instructions & rights",  tooltip:"Job skills, workplace behaviour, and professional communication." },
 ];
 

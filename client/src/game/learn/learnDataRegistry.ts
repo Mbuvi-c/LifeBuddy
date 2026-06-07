@@ -4,6 +4,7 @@ import { DAILY_ROUTINE_LEARN_DATA } from './learnData_routine'
 import { FINANCIAL_PLANNING_LEARN_DATA } from './learnData_financial'
 import { DIGITAL_SAFETY_LEARN_DATA } from './learnData_digital'
 import { MOBILE_MONEY_LEARN_DATA } from './learnData_mobile'
+import { COMMUNICATION_ADVOCACY_LEARN_DATA } from './learnData_communication'
 
 const REGISTRY: Record<string, Record<string, any>> = {
   money_transactions: MONEY_LEARN_DATA,
@@ -12,6 +13,7 @@ const REGISTRY: Record<string, Record<string, any>> = {
   financial_planning: FINANCIAL_PLANNING_LEARN_DATA,
   digital_safety: DIGITAL_SAFETY_LEARN_DATA,
   mobile_money: MOBILE_MONEY_LEARN_DATA,
+  communication_advocacy: COMMUNICATION_ADVOCACY_LEARN_DATA,
 }
 
 export function getLearnData(skillId: string): Record<string, any> | undefined {
